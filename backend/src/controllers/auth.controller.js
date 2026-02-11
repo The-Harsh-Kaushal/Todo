@@ -2,8 +2,8 @@
 import userSchema from "../models/userSchema.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import {SALT_ROUNDS,JWT_SECRET} from "../config/env.js";
-import { AT_LIFE, RT_LIFE } from "../config/env.js";
+import { AT_LIFE, RT_LIFE,JWT_SECRET ,SALT_ROUNDS} from "../config/env.js";
+
 
 const loginMiddleware = async (req, res, next) => {
    const {email,password} = req.body;
@@ -20,6 +20,7 @@ const loginMiddleware = async (req, res, next) => {
        return res.status(400).send("Invalid credentials");
      }
      const payload = {email: user.email,name:user.name,id:user._id};
+     console.log(typeof JWT_SECRET);
      const refresh_token = jwt.sign(JWT_SECRET, { expiresIn: RT_LIFE });
      const access_token = jwt.sign(payload, JWT_SECRET, { expiresIn: AT_LIFE });
 

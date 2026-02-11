@@ -18,7 +18,7 @@ const AddList= async(req,res,next)=>{
         if(!board){
             return res.status(400).send("Board not found");
         }
-        if(unique_id.toString() !== board.owner.toString()){
+        if(id.toString() !== board.owner.toString()){
             return res.status(400).send("Unauthorized");
         }
 
@@ -99,7 +99,8 @@ const ChangeOrder = async(req,res,next)=>{
         }
        
         const new_order = order_resolver(LB,TB);
-        if(new_order) return res.status(500).send("internal server error");
+        console.log(new_order);
+        if(!new_order) return res.status(500).send("internal server error");
         list.order = new_order;
         await list.save();
         res.status(200).json({msg:"List order updated"});
