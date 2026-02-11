@@ -4,31 +4,28 @@ import { configDotenv } from "dotenv";
 import mongoose from "mongoose";
 configDotenv();
 
-import {PORT, DB_URL} from "./src/config/env.js";
-import userRoutes from "./src/routes/user.routes.js"; 
+import { PORT, DB_URL } from "./src/config/env.js";
+import userRoutes from "./src/routes/user.routes.js";
 import authRoutes from "./src/routes/auth.routes.js";
 import boardRoutes from "./src/routes/board.routes.js";
 import listRoutes from "./src/routes/list.routes.js";
 import taskRoutes from "./src/routes/task.routes.js";
 
+const app = express();
+app.use(express.json());
+app.use(cookieParser());
+app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/board", boardRoutes);
+app.use("/api/list", listRoutes);
+app.use("/api/task", taskRoutes);
 
- const app = express();
- app.use(express.json());
- app.use(cookieParser());
- app.use('/api/auth', authRoutes);
- app.use('/api/user',userRoutes );
- app.use('/api/board',boardRoutes);
- app.use('/api/list',listRoutes);
- app.use('/api/task',taskRoutes);
- 
-try{
-    await mongoose.connect(DB_URL);
-    console.log("Connected to MongoDB");
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-    });
-}catch(error){
-    console.error("Error starting the server:", error);
+try {
+  await mongoose.connect(DB_URL);
+  console.log("Connected to MongoDB");
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+} catch (error) {
+  console.error("Error starting the server:", error);
 }
- 
- 

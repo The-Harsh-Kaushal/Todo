@@ -1,7 +1,8 @@
 export const SALT_ROUNDS = Number(process.env.SALT_ROUNDS) || 10;
 export const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
 export const PORT = process.env.PORT || 5000;
-export const DB_URL = process.env.DB_URL || "mongodb://localhost:27017/ToDoList";
+export const DB_URL =
+  process.env.DB_URL || "mongodb://localhost:27017/ToDoList";
 export const AT_LIFE = process.env.AT_LIFE || "1h";
 export const RT_LIFE = process.env.RT_LIFE || "7d";
 

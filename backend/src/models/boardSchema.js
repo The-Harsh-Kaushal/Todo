@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
 const boardSchema = new mongoose.Schema({
-    name:{
-        type:String,
-        required:true
-    },
-    owner:{
-        type:mongoose.Schema.Types.ObjectId,
-        required:true
-    },
-})
+  name: {
+    type: String,
+    required: true,
+  },
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+  },
+});
 boardSchema.index({ owner: 1 });
-export default mongoose.model("board",boardSchema);
+export default mongoose.model("board", boardSchema);
