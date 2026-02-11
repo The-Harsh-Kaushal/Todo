@@ -5,19 +5,11 @@ const taskSchema  = new mongoose.Schema({
         required:true
     },
     list:{
-        type:String,
-        required:true
-    },
-    board:{
-        type:String,
+        type:mongoose.Schema.Types.ObjectId,
         required:true
     },
     owner:{
-        type:String,
-        required:true
-    },
-    order:{
-        type:Number,
+        type:mongoose.Schema.Types.ObjectId,
         required:true
     },
     status:{
@@ -33,21 +25,14 @@ const taskSchema  = new mongoose.Schema({
         required:true
     },
     collabrators:{
-        type:[String],
+        type:[mongoose.Schema.Types.ObjectId],
         default:[]
     },
     priority:{
         type:Number,
         default:0
-    },
-    comments:{
-        type:[{
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "comment"
-        }],
-        default:[]
     }
 
 });
-taskSchema.index({ list: 1, order: 1,owner:1 });
+taskSchema.index({ list: 1,owner:1});
 export default mongoose.model("task",taskSchema);

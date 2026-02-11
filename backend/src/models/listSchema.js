@@ -6,21 +6,18 @@ const listSchema = new mongoose.Schema({
         required: true
     },
     owner: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
         required: true
     },
     board: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
         required: true
     },
     order: {
-        type: Number,
-        required: true
+        type: String,
+        required: true,
+        unique:true
     },
-    tasks: {
-        type: [String],
-        default: []
-    }
 })
 listSchema.index({ owner: 1, order: 1,board: 1 });
 export default mongoose.model("list",listSchema);

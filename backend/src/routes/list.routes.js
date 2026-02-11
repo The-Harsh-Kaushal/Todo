@@ -11,6 +11,7 @@ Router.delete("/deletelist/:list_id",verifySession,listControllers.DeleteList, a
 Router.patch("/changeorder/:list_id",verifySession,listControllers.ChangeOrder, async(req,res)=>{
     
 })
-Router.get("/gettasks/:list_id",verifySession,listControllers.getAllTasks, async(req,res)=>{
-})
+
+Router.get("/getlists/:board_id",verifySession,listControllers.getLists, async(req,res)=>{
+})  
 export default Router;

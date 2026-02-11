@@ -5,17 +5,9 @@ const boardSchema = new mongoose.Schema({
         required:true
     },
     owner:{
-        type:String,
+        type:mongoose.Schema.Types.ObjectId,
         required:true
     },
-    lists:{
-        type:[{
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "list",
-            unique: true
-        }],
-        default:[]
-    }
 })
 boardSchema.index({ owner: 1 });
 export default mongoose.model("board",boardSchema);

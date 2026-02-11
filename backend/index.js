@@ -1,4 +1,5 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import { configDotenv } from "dotenv";
 import mongoose from "mongoose";
 configDotenv();
@@ -10,8 +11,10 @@ import boardRoutes from "./src/routes/board.routes.js";
 import listRoutes from "./src/routes/list.routes.js";
 import taskRoutes from "./src/routes/task.routes.js";
 
+
  const app = express();
  app.use(express.json());
+ app.use(cookieParser());
  app.use('/api/auth', authRoutes);
  app.use('/api/user',userRoutes );
  app.use('/api/board',boardRoutes);

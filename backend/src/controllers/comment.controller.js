@@ -4,7 +4,7 @@ import commentSchema from "../models/commentSchema.js";
 const addComment = async(req,res,next)=>{
     const {task_id} = req.params;
     const {comment} = req.body;
-    const {unique_id} = req.user;
+    const {id} = req.user;
     if(!task_id) return res.status(400).json({msg:"select a task to add comment"});
     try{
         const task = await taskSchema.findById(task_id);
@@ -13,12 +13,10 @@ const addComment = async(req,res,next)=>{
         }
         const newComment = new commentSchema({
             text: comment,
-            owner: unique_id,
+            owner: id,
             task: task_id
         })
         await newComment.save();
-        task.comments.push(newComment._id);
-        await task.save();
         res.status(200).json({msg:"Comment added"});
     }
     catch(err){
@@ -28,7 +26,7 @@ const addComment = async(req,res,next)=>{
 }
 const deleteComment = async(req,res,next)=>{
     const {task_id,comment_id} = req.params;
-    const {unique_id} = req.user;
+    const {id} = req.user;
     if(!task_id) return res.status(400).json({msg:"select a task to delete comment"});
     try{
         const task = await taskSchema.findById(task_id);
@@ -39,9 +37,7 @@ const deleteComment = async(req,res,next)=>{
         if(!comment){
             return res.status(400).send("Comment not found");
         }
-        if(unique_id!=comment.owner && unique_id!=task.owner) return res.status(400).json({msg:"You can delete only your comments"});
-        task.comments.pull(comment_id);
-        await task.save();
+        if(id!==comment.owner.toString() && id!==task.owner.toString()) return res.status(400).json({msg:"You can delete only your comments"});
         await commentSchema.deleteOne({_id:comment_id});
         res.status(200).json({msg:"Comment deleted"});
     }

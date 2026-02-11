@@ -6,12 +6,12 @@ import {SALT_ROUNDS,JWT_SECRET} from "../config/env.js";
 import { AT_LIFE, RT_LIFE } from "../config/env.js";
 
 const loginMiddleware = async (req, res, next) => {
-   const {identifier,password} = req.body;
-   if(!identifier || !password){
+   const {email,password} = req.body;
+   if(!email || !password){
        return res.status(400).send("Identifier and password are required");
    }
    try {
-    const user = await userSchema.findOne({$or: [{email: identifier}, {unique_id: identifier}]}).select("-_id -refresh_token -boards");
+    const user = await userSchema.findOne({ email}).select("-refresh_token");
      if (!user) {
        return res.status(400).send("User not found");
      }
@@ -19,8 +19,9 @@ const loginMiddleware = async (req, res, next) => {
      if (!isMatch) {
        return res.status(400).send("Invalid credentials");
      }
-     const refresh_token = jwt.sign({ unique_id: user.unique_id,email: user.email,name:user.name }, JWT_SECRET, { expiresIn: RT_LIFE });
-     const access_token = jwt.sign({ unique_id: user.unique_id,email: user.email,name:user.name }, JWT_SECRET, { expiresIn: AT_LIFE });
+     const payload = {email: user.email,name:user.name,id:user._id};
+     const refresh_token = jwt.sign(JWT_SECRET, { expiresIn: RT_LIFE });
+     const access_token = jwt.sign(payload, JWT_SECRET, { expiresIn: AT_LIFE });
 
      res.cookie("refresh_token", refresh_token, { httpOnly: true,
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days in milliseconds
@@ -33,21 +34,24 @@ const loginMiddleware = async (req, res, next) => {
    }
 };
 const signupMiddleware= async(req,res,next)=>{
-  const {email,password,name,unique_id} = req.body;
-  if(!email || !password || !name || !unique_id){
+  const {email,password,name} = req.body;
+  if(!email || !password || !name ){
       return res.status(400).send("All fields are required");
   }
   try {
-      const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-      const response = await userSchema.findOne({$or: [{email}, {unique_id}]});
-      if (response) {
+     
+      const conflict = await userSchema.findOne({ email});
+      if (conflict) {
           return res.status(400).send("User already exists");
       }
-      const refresh_token = jwt.sign({ unique_id, email, name }, JWT_SECRET, { expiresIn: RT_LIFE });
-      const access_token = jwt.sign({ unique_id, email, name }, JWT_SECRET, { expiresIn: AT_LIFE });
-      
-      const newUser = new userSchema({ email, password: hashedPassword, name, unique_id, refresh_token: [refresh_token] });
+      const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+      const newUser = new userSchema({ email, password: hashedPassword, name});
+      const payload = { id:newUser._id, email, name, };
+      const refresh_token = jwt.sign(payload, JWT_SECRET, { expiresIn: RT_LIFE });
+      const access_token = jwt.sign(payload, JWT_SECRET, { expiresIn: AT_LIFE });
+      newUser.refresh_token.push(refresh_token);
       await newUser.save();
+      
    res.cookie("refresh_token", refresh_token, { httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days in milliseconds
      });

@@ -9,9 +9,9 @@ Router.patch("/updatetask/:task_id",verifySession,taskControllers.updateTask, as
 })
 Router.delete("/deletetask/:task_id",verifySession,taskControllers.deleteTask, async(req,res)=>{
 })
-Router.patch("/changetaskorder/:task_id",verifySession,taskControllers.changeTaskOrder, async(req,res)=>{
+// Router.patch("/changetaskorder/:task_id",verifySession,taskControllers.changeTaskOrder, async(req,res)=>{
     
-})
+// })
 Router.patch("/changetaskstatus/:task_id",verifySession,taskControllers.taskStatusUpdate, async(req,res)=>{
     
 })
@@ -25,5 +25,7 @@ Router.get("/getcomments/:task_id",verifySession,commentsControllers.getAllComme
 })
 Router.delete("/deletecomment/:task_id/:comment_id",verifySession,commentsControllers.deleteComment, async(req,res)=>{
     
+})
+Router.get("/gettasks/:list_id",verifySession,taskControllers.getAllTasks, async(req,res)=>{
 })
 export default Router;

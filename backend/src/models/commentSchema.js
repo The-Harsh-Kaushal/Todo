@@ -5,11 +5,11 @@ const commentSchema = new mongoose.Schema({
         required: true
     },
     owner: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
         required: true
     },
     task: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId,
         required: true
     },
     date: {
