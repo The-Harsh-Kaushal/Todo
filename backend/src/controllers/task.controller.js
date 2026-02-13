@@ -18,6 +18,9 @@ const createTask = async (req, res, next) => {
     }
     if (list.owner.toString() !== id)
       return res.status(400).send("Unauthorized");
+    const lastTask = await taskSchema
+      .findOne({ list: task.list })
+      .sort({ order: -1 });
 
     const deadline = new Date(task_deadline);
     const task = new taskSchema({
@@ -26,6 +29,7 @@ const createTask = async (req, res, next) => {
       owner: list.owner,
       description: task_description,
       deadline: deadline,
+      order: lastTask ? lastTask.order + 1 : 1,
     });
     await task.save();
     res.status(200).json({ msg: "Task added" });
@@ -81,11 +85,15 @@ const updateTask = async (req, res, next) => {
 };
 const taskStatusUpdate = async (req, res, next) => {
   const { task_id } = req.params;
+  const { id } = req.user;
   if (!task_id) return res.status(400).json({ msg: "select a task to update" });
   try {
     const task = await taskSchema.findById(task_id);
     if (!task) {
       return res.status(400).send("Task not found");
+    }
+    if (id != task.owner && !task.collabrators.includes(id)) {
+      return res.status(400).send("Unauthorized");
     }
     task.status = !task.status;
     await task.save();
@@ -106,8 +114,13 @@ const deleteTask = async (req, res, next) => {
     }
     if (task.owner.toString() !== id)
       return res.status(400).send("unauthorized");
+
     await commentSchema.deleteMany({ task: task._id });
     await taskSchema.deleteOne({ _id: task_id });
+    await taskSchema.updateMany(
+      { order: { $gt: task.order } },
+      { $inc: { order: -1 } },
+    );
     res.status(200).json({ msg: "Task deleted" });
   } catch (err) {
     console.log("Error occurred while deleting task:", err);
@@ -163,6 +176,101 @@ const getAllTasks = async (req, res, next) => {
     res.status(500).send("Internal Server Error");
   }
 };
+import mongoose from "mongoose";
+
+const changeOrder = async (req, res) => {
+  const { task_id } = req.params;
+  const { new_order } = req.body;
+  const { id } = req.user;
+
+  if (!task_id) return res.status(400).send("Choose a task to change order");
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const task = await taskSchema.findById(task_id).session(session);
+
+    if (!task) {
+      await session.abortTransaction();
+      return res.status(400).send("No such task exists");
+    }
+
+    if (id != task.owner && !task.collaborators.includes(id)) {
+      await session.abortTransaction();
+      return res.status(400).send("Unauthorized");
+    }
+
+    const old_order = task.order;
+
+    if (new_order === old_order) {
+      await session.abortTransaction();
+      return res.status(200).send("No change needed");
+    }
+
+    const max_tasks = await taskSchema
+      .countDocuments({ list: task.list })
+      .session(session);
+
+    if (new_order < 1 || new_order > max_tasks) {
+      await session.abortTransaction();
+      return res.status(400).send("Choose a valid order");
+    }
+
+    if (new_order < old_order) {
+      // Moving up
+      await taskSchema.updateMany(
+        {
+          list: task.list,
+          order: { $gte: new_order, $lt: old_order },
+        },
+        { $inc: { order: 1 + max_tasks } },
+        { session },
+      );
+      task.order = new_order;
+      await task.save({ session });
+      await taskSchema.updateMany(
+        {
+          list: task.list,
+          order: { $gt: max_tasks },
+        },
+        { $inc: { order: -max_tasks } },
+        { session },
+      );
+    } else {
+      // Moving down
+      await taskSchema.updateMany(
+        {
+          list: task.list,
+          order: { $gt: old_order, $lte: new_order },
+        },
+        { $inc: { order: -1 + max_tasks } },
+        { session },
+      );
+      task.order = new_order;
+      await task.save({ session });
+      await taskSchema.updateMany(
+        {
+          list: task.list,
+          order: { $gt: max_tasks },
+        },
+        { $inc: { order: -max_tasks } },
+        { session },
+      );
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).send("Order updated");
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+
+    console.log("Error while changing task order:", err);
+    res.status(500).send("Internal server error");
+  }
+};
 
 export default {
   createTask,
@@ -172,4 +280,5 @@ export default {
   deleteTask,
   assignTask,
   getAllTasks,
+  changeOrder,
 };

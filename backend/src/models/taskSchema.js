@@ -32,6 +32,11 @@ const taskSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  order: {
+    type: Number,
+    required: true,
+  },
 });
-taskSchema.index({ list: 1, owner: 1 });
+taskSchema.index({ owner: 1 });
+taskSchema.index({ list: 1, order: 1 }, { unique: true });
 export default mongoose.model("task", taskSchema);

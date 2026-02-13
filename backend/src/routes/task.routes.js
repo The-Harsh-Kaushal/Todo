@@ -3,6 +3,12 @@ import taskControllers from "../controllers/task.controller.js";
 import commentsControllers from "../controllers/comment.controller.js";
 import { verifySession } from "../middlewares/auth.js";
 const Router = express.Router();
+Router.get(
+  "/gettasks/:list_id",
+  verifySession,
+  taskControllers.getAllTasks,
+  async (req, res) => {},
+);
 Router.post(
   "/addtask/:list_id",
   verifySession,
@@ -21,9 +27,12 @@ Router.delete(
   taskControllers.deleteTask,
   async (req, res) => {},
 );
-// Router.patch("/changetaskorder/:task_id",verifySession,taskControllers.changeTaskOrder, async(req,res)=>{
-
-// })
+Router.patch(
+  "/changetaskorder/:task_id",
+  verifySession,
+  taskControllers.changeOrder,
+  async (req, res) => {},
+);
 Router.patch(
   "/changetaskstatus/:task_id",
   verifySession,
@@ -37,7 +46,7 @@ Router.patch(
   async (req, res) => {},
 );
 Router.get(
-  "/gettask/:task_id",
+  "/taskdetails/:task_id",
   verifySession,
   taskControllers.taskDetails,
   async (req, res) => {},
@@ -60,10 +69,5 @@ Router.delete(
   commentsControllers.deleteComment,
   async (req, res) => {},
 );
-Router.get(
-  "/gettasks/:list_id",
-  verifySession,
-  taskControllers.getAllTasks,
-  async (req, res) => {},
-);
+
 export default Router;

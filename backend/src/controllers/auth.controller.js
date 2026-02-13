@@ -18,8 +18,7 @@ const loginMiddleware = async (req, res, next) => {
       return res.status(400).send("Invalid credentials");
     }
     const payload = { email: user.email, name: user.name, id: user._id };
-    console.log(typeof JWT_SECRET);
-    const refresh_token = jwt.sign(JWT_SECRET, { expiresIn: RT_LIFE });
+    const refresh_token = jwt.sign(payload,JWT_SECRET, { expiresIn: RT_LIFE });
     const access_token = jwt.sign(payload, JWT_SECRET, { expiresIn: AT_LIFE });
 
     res.cookie("refresh_token", refresh_token, {

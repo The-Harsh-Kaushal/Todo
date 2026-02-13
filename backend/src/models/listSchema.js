@@ -16,8 +16,8 @@ const listSchema = new mongoose.Schema({
   order: {
     type: String,
     required: true,
-    unique: true,
   },
 });
-listSchema.index({ owner: 1, order: 1, board: 1 });
+listSchema.index({ owner: 1 });
+listSchema.index({ board: 1, order: 1 }, { unique: true });
 export default mongoose.model("list", listSchema);

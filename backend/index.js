@@ -1,10 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
-import { configDotenv } from "dotenv";
-import mongoose from "mongoose";
-configDotenv();
 
-import { PORT, DB_URL } from "./src/config/env.js";
+import { PORT, mongodConnect } from "./src/config/env.js";
 import userRoutes from "./src/routes/user.routes.js";
 import authRoutes from "./src/routes/auth.routes.js";
 import boardRoutes from "./src/routes/board.routes.js";
@@ -21,8 +18,8 @@ app.use("/api/list", listRoutes);
 app.use("/api/task", taskRoutes);
 
 try {
-  await mongoose.connect(DB_URL);
-  console.log("Connected to MongoDB");
+  await mongodConnect();
+  
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });
