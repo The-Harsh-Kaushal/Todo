@@ -19,7 +19,7 @@ const createTask = async (req, res, next) => {
     if (list.owner.toString() !== id)
       return res.status(400).send("Unauthorized");
     const lastTask = await taskSchema
-      .findOne({ list: task.list })
+      .findOne({ list: list_id })
       .sort({ order: -1 });
 
     const deadline = new Date(task_deadline);
@@ -64,6 +64,7 @@ const updateTask = async (req, res, next) => {
   const task_name = req.body.task_name;
   const task_description = req.body.task_description;
   const task_deadline = req.body.task_deadline;
+  const task_priority = req.body.task_priority;
   if (!task_id) return res.status(400).json({ msg: "select a task to update" });
 
   try {
@@ -71,12 +72,13 @@ const updateTask = async (req, res, next) => {
     if (!task) {
       return res.status(400).send("Task not found");
     }
-    if (task.owner.toString() !== req.user.unique_id) {
+    if (task.owner.toString() !== req.user.id) {
       return res.status(400).send("Unauthorized");
     }
     if (task_name) task.name = task_name;
     if (task_description) task.description = task_description;
     if (task_deadline) task.deadline = task_deadline;
+    if (task_priority) task.priority = task_priority;
     await task.save();
     res.status(200).json({ msg: "Task updated" });
   } catch (err) {
@@ -84,6 +86,7 @@ const updateTask = async (req, res, next) => {
   }
 };
 const taskStatusUpdate = async (req, res, next) => {
+  console.log("jhhhkk;asdga;kl");
   const { task_id } = req.params;
   const { id } = req.user;
   if (!task_id) return res.status(400).json({ msg: "select a task to update" });
@@ -92,6 +95,8 @@ const taskStatusUpdate = async (req, res, next) => {
     if (!task) {
       return res.status(400).send("Task not found");
     }
+    console.log(id);
+    console.log(task.owner);
     if (id != task.owner && !task.collabrators.includes(id)) {
       return res.status(400).send("Unauthorized");
     }
@@ -169,7 +174,9 @@ const getAllTasks = async (req, res, next) => {
       .find({ list: list_id })
       .skip(page * 10)
       .limit(10)
-      .sort({ order: 1 });
+      .sort({ order: 1 })
+      .populate("collabrators", "name email")
+      .populate("owner", "name email");
     res.status(200).json(tasks);
   } catch (err) {
     console.log("Error occurred while getting tasks:", err);

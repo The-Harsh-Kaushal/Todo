@@ -30,9 +30,7 @@ export const refreshSession = async (req, res, next) => {
     const access_token = jwt.sign(rest, JWT_SECRET, { expiresIn: AT_LIFE });
     await userSchema.updateOne({ _id: rest.id }, { $push: { refresh_token } });
     res.cookie("refresh_token", refresh_token, {
-      httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
-      secure: true,
     });
     res.status(200).json({ msg: "refresh successful", access: access_token });
   } catch (error) {

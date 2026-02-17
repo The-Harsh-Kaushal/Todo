@@ -7,11 +7,11 @@ const listSchema = new mongoose.Schema({
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true,
+    ref: "User"
   },
   board: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true,
+    ref: "board"
   },
   order: {
     type: String,

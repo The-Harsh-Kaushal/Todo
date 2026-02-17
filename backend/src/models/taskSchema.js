@@ -6,11 +6,11 @@ const taskSchema = new mongoose.Schema({
   },
   list: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true,
+    ref: "list",
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
-    required: true,
+    ref: "User",
   },
   status: {
     type: Boolean,
@@ -25,7 +25,12 @@ const taskSchema = new mongoose.Schema({
     required: true,
   },
   collabrators: {
-    type: [mongoose.Schema.Types.ObjectId],
+    type: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     default: [],
   },
   priority: {

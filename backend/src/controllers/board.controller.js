@@ -11,7 +11,8 @@ const getBoards = async (req, res, next) => {
       .find()
       .skip(page * 10)
       .limit(10)
-      .sort({ owner: 1 });
+      .sort({ owner: 1 })
+      .populate("owner", "name email");
     res.status(200).json({ boards });
   } catch (error) {
     console.log("Error occurred while getting boards:", error);
@@ -21,7 +22,8 @@ const getBoards = async (req, res, next) => {
 
 const creteBoard = async (req, res, next) => {
   const { id } = req.user;
-  const { board_name } = req.body;
+  const board_name = req.body.name;
+  if (!board_name) return res.status(400).json({ msg: "enter a vlaid name " });
   try {
     const board = new boardSchema({ name: board_name, owner: id });
     await board.save();
