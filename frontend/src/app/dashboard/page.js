@@ -107,7 +107,6 @@ export default function dashboard() {
       );
       setActiveList(id);
       setTasks(tasks.data);
-
     } catch (error) {
       console.log(error);
     }
@@ -166,8 +165,8 @@ export default function dashboard() {
     }
   }
   function getTaskPos(id, mode) {
-    if (mode == "list") return lists.findIndex((list) => list._id == id);
-    if (mode == "task") return tasks.findIndex((task) => task._id == id);
+    if (mode == "lists") return lists.findIndex((list) => list._id == id);
+    if (mode == "tasks") return tasks.findIndex((task) => task._id == id);
   }
   async function handleDragEndList({ active, over }) {
     if (active.id == over.id) {
@@ -199,6 +198,27 @@ export default function dashboard() {
       );
       setLists((prev) => {
         return arrayMove(prev, origPos, newPos);
+      });
+    } catch (error) {}
+  }
+  async function handleDragEndTask({ active, over }) {
+    if (active.id == over.id) return;
+    const newPos = getTaskPos(over.id, "tasks");
+    const oriPos = getTaskPos(active.id, "tasks");
+    try {
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/task/changetaskorder/${active.id}`,
+        {
+          new_order: tasks[newPos].order,
+        },
+        {
+          headers: {
+            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+          },
+        },
+      );
+      setTasks((prev) => {
+        return arrayMove(prev, oriPos, newPos);
       });
     } catch (error) {}
   }
@@ -382,25 +402,35 @@ export default function dashboard() {
         {/* Content */}
         {TasksOpen && (
           <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scroll">
-            {tasks.map((item, index) => (
-              <div
-                key={index}
-                className="bg-gray-900 hover:bg-gray-800 transition-colors rounded-md px-3 py-2 cursor-pointer"
+            <DndContext
+              collisionDetection={closestCorners}
+              onDragEnd={handleDragEndTask}
+            >
+              <SortableContext
+                items={tasks.map((task) => task._id)}
+                strategy={verticalListSortingStrategy}
               >
-                <TaskDisplayer
-                  id={item._id}
-                  name={item.name}
-                  status={item.status}
-                  deadline={item.deadline}
-                  priority={item.priority}
-                  description={item.description}
-                  collaborators={item.collabrators}
-                  onUpdate={onUpdate}
-                  onUpdateStatus={updateStatus}
-                  onAssignCollaborator={onAssignCollaborator}
-                />
-              </div>
-            ))}
+                {tasks.map((item, index) => (
+                  <div
+                    key={item._id}
+                    className="bg-gray-900 hover:bg-gray-800 transition-colors rounded-md px-3 py-2 cursor-pointer"
+                  >
+                    <TaskDisplayer
+                      id={item._id}
+                      name={item.name}
+                      status={item.status}
+                      deadline={item.deadline}
+                      priority={item.priority}
+                      description={item.description}
+                      collaborators={item.collabrators}
+                      onUpdate={onUpdate}
+                      onUpdateStatus={updateStatus}
+                      onAssignCollaborator={onAssignCollaborator}
+                    />
+                  </div>
+                ))}
+              </SortableContext>
+            </DndContext>
           </div>
         )}
       </div>

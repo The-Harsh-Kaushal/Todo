@@ -1,3 +1,5 @@
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import React, { useState } from "react";
 
 function truncate(text, length = 40) {
@@ -22,7 +24,7 @@ export default function TaskDisplayer({
   collaborators = [],
   onUpdate,
   onUpdateStatus,
-  onAssignCollaborator, 
+  onAssignCollaborator,
 }) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -63,9 +65,16 @@ export default function TaskDisplayer({
     onAssignCollaborator(id, newCollaborator.trim());
     setNewCollaborator("");
   }
-
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id });
+  const style = {
+    transition,
+    transform: CSS.Transform.toString(transform),
+  };
   return (
     <div
+      ref={setNodeRef}
+      style={style}
       onClick={() => !editing && setExpanded(!expanded)}
       className="w-full 
                  border border-zinc-800
@@ -79,7 +88,11 @@ export default function TaskDisplayer({
       <div className="flex items-center justify-between gap-3">
         {/* Left */}
         <div className="flex flex-col min-w-0">
-          <span className="text-sm font-semibold text-white truncate">
+          <span
+            {...attributes}
+            {...listeners}
+            className="text-sm font-semibold text-white truncate"
+          >
             {truncate(name, 30)}
           </span>
 
