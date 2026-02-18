@@ -1,3 +1,5 @@
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import React from "react";
 
 function truncate(text, length = 22) {
@@ -5,10 +7,20 @@ function truncate(text, length = 22) {
   return text.length > length ? text.slice(0, length) + "..." : text;
 }
 
-export default function Displayer({ name, owner, id,onClickHandler }) {
+export default function Displayer({ name, owner, id, onClickHandler }) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({id});
+  const style = {
+    transition,
+    transform: CSS.Transform.toString(transform),
+  };
   return (
     <div
-    onClick={()=> onClickHandler(id)}
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      style={style}
+      onClick={() => onClickHandler(id)}
       className="w-full max-w-md 
                     flex items-center justify-between gap-3
                     px-4 py-2.5 

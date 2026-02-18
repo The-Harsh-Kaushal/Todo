@@ -157,7 +157,7 @@ export default function TaskDisplayer({
                         key={index}
                         className="text-xs px-2 py-1 bg-zinc-800 text-zinc-300 rounded-sm"
                       >
-                        {truncate(col, 18)}
+                        {truncate(col.name, 18)}
                       </span>
                     ))
                   ) : (

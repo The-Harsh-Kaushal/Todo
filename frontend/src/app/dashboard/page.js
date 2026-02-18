@@ -5,6 +5,12 @@ import Displayer from "@/components/displayer";
 import TaskDisplayer from "@/components/TaskDisplayer";
 import CreateButton from "@/components/CreationButton";
 import axios from "axios";
+import { closestCorners, DndContext } from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 
 export default function dashboard() {
   const [boardsOpen, setBoardsOpen] = useState(true);
@@ -101,6 +107,7 @@ export default function dashboard() {
       );
       setActiveList(id);
       setTasks(tasks.data);
+
     } catch (error) {
       console.log(error);
     }
@@ -135,15 +142,66 @@ export default function dashboard() {
           },
         },
       );
-      console.log(
-        `Task ${taskId} status updated to ${newStatus ? "finished" : "unfinished"}`,
-      );
-
     } catch (err) {
       console.error("Failed to update task status:", err);
     }
   }
-
+  async function onAssignCollaborator(id, newCollaborator) {
+    try {
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/task/assigntask/${id}`,
+        {
+          email: newCollaborator,
+        },
+        {
+          headers: {
+            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+          },
+        },
+      );
+      console.log(response);
+      onClickList(activeList);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  function getTaskPos(id, mode) {
+    if (mode == "list") return lists.findIndex((list) => list._id == id);
+    if (mode == "task") return tasks.findIndex((task) => task._id == id);
+  }
+  async function handleDragEndList({ active, over }) {
+    if (active.id == over.id) {
+      onClickList(active.id);
+      return;
+    }
+    const newPos = getTaskPos(over.id, "list");
+    const origPos = getTaskPos(active.id, "list");
+    let LB, TB;
+    if (newPos > origPos) {
+      LB = lists[newPos].order;
+      TB = lists.length - 1 == newPos ? "" : lists[newPos + 1].order;
+    } else {
+      LB = newPos == 0 ? "" : lists[newPos - 1].order;
+      TB = lists[newPos].order;
+    }
+    try {
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/list/changeorder/${active.id}`,
+        {
+          LB,
+          TB,
+        },
+        {
+          headers: {
+            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+          },
+        },
+      );
+      setLists((prev) => {
+        return arrayMove(prev, origPos, newPos);
+      });
+    } catch (error) {}
+  }
   useEffect(() => {
     async function onLoad() {
       try {
@@ -211,7 +269,7 @@ export default function dashboard() {
           <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scroll">
             {boards.map((item, index) => (
               <div
-                key={index}
+                key={item._id}
                 className="bg-gray-900 hover:bg-gray-800 transition-colors rounded-md px-3 py-2 cursor-pointer"
               >
                 <Displayer
@@ -227,6 +285,7 @@ export default function dashboard() {
       </div>
 
       {/* Lists */}
+
       <div
         className={`${
           listsOpen ? "w-1/4" : "w-16"
@@ -261,22 +320,33 @@ export default function dashboard() {
         {/* Content */}
         {listsOpen && (
           <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scroll">
-            {lists.map((item, index) => (
-              <div
-                key={index}
-                className="bg-gray-900 hover:bg-gray-800 transition-colors rounded-md px-3 py-2 cursor-pointer"
+            <DndContext
+              collisionDetection={closestCorners}
+              onDragEnd={handleDragEndList}
+            >
+              <SortableContext
+                items={lists.map((list) => list._id)}
+                strategy={verticalListSortingStrategy}
               >
-                <Displayer
-                  id={item._id}
-                  owner={item.owner.name}
-                  name={item.name}
-                  onClickHandler={onClickList}
-                />
-              </div>
-            ))}
+                {lists.map((item, index) => (
+                  <div
+                    key={index}
+                    className="bg-gray-900 hover:bg-gray-800 transition-colors rounded-md px-3 py-2 cursor-pointer"
+                  >
+                    <Displayer
+                      id={item._id}
+                      owner={item.owner.name}
+                      name={item.name}
+                      onClickHandler={onClickList}
+                    />
+                  </div>
+                ))}
+              </SortableContext>
+            </DndContext>
           </div>
         )}
       </div>
+
       {/* tasks */}
       <div
         className={`${
@@ -327,6 +397,7 @@ export default function dashboard() {
                   collaborators={item.collabrators}
                   onUpdate={onUpdate}
                   onUpdateStatus={updateStatus}
+                  onAssignCollaborator={onAssignCollaborator}
                 />
               </div>
             ))}
