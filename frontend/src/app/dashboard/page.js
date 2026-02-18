@@ -141,6 +141,9 @@ export default function dashboard() {
           },
         },
       );
+      setTasks(prev=>{
+        return 
+      })
     } catch (err) {
       console.error("Failed to update task status:", err);
     }
@@ -173,8 +176,8 @@ export default function dashboard() {
       onClickList(active.id);
       return;
     }
-    const newPos = getTaskPos(over.id, "list");
-    const origPos = getTaskPos(active.id, "list");
+    const newPos = getTaskPos(over.id, "lists");
+    const origPos = getTaskPos(active.id, "lists");
     let LB, TB;
     if (newPos > origPos) {
       LB = lists[newPos].order;

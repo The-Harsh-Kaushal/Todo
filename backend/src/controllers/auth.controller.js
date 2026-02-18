@@ -2,6 +2,7 @@ import userSchema from "../models/userSchema.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { AT_LIFE, RT_LIFE, JWT_SECRET, SALT_ROUNDS } from "../config/env.js";
+import { sendWelcomeEmail } from "../utils/welcome_email.js";
 
 const loginMiddleware = async (req, res, next) => {
   const { email, password } = req.body;
@@ -47,9 +48,8 @@ const signupMiddleware = async (req, res, next) => {
     const access_token = jwt.sign(payload, JWT_SECRET, { expiresIn: AT_LIFE });
     newUser.refresh_token.push(refresh_token);
     await newUser.save();
-
+    sendWelcomeEmail(newUser.email, newUser.name);
     res.cookie("refresh_token", refresh_token, {
-
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
     });
     res.status(201).json({ msg: "Signup successful", access: access_token });
