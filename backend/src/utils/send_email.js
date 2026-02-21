@@ -8,18 +8,13 @@ const transporter = nodemailer.createTransport({
   },
 });
  
-export const sendWelcomeEmail = async (to, name) => {
-  console.log("got called");
+export const sendEmail = async (to , subject , html) => {
   try {
     await transporter.sendMail({
       from: `"Taskify" <${process.env.EMAIL_USER}>`,
       to,
-      subject: "Welcome to Taskify 🎉",
-      html: `
-        <h2>Hello ${name},</h2>
-        <p>Your account was successfully created.</p>
-        <p>We're happy to have you onboard.</p>
-      `,
+      subject: subject,
+      html: html,
     });
 
     console.log("Email sent successfully");

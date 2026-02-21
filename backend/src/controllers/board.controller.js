@@ -5,14 +5,90 @@ import listSchema from "../models/listSchema.js";
 import commentSchema from "../models/commentSchema.js";
 
 const getBoards = async (req, res, next) => {
-  const page = req.query.page;
+  const page = Number(req.query.page) || 0;
+  const startswith = req.query.startswith;
+  let matchStage = { $match: {} };
+  if (startswith) {
+    const usersid = await boardSchema.find(
+      { name: { $regex: `^${startswith}`, $options: "i" } },
+      { _id: 1 },
+    );
+    const userIds = usersid.map((item) => item._id);
+    matchStage = {
+      $match: {
+        $or: [
+          { name: { $regex: `^${startswith}` } },
+          { owner: { $in: userIds } },
+        ],
+      },
+    };
+  }
+
+  console.log(page);
   try {
-    const boards = await boardSchema
-      .find()
-      .skip(page * 10)
-      .limit(10)
-      .sort({ owner: 1 })
-      .populate("owner", "name email");
+    const boards = await boardSchema.aggregate([
+      matchStage,
+      {
+        $skip: page * 10,
+      },
+      {
+        $limit: 10,
+      },
+      {
+        $lookup: {
+          from: "users",
+          let: { ownerId: "$owner" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$_id", "$$ownerId"] },
+              },
+            },
+            {
+              $project: {
+                name: 1,
+                email: 1,
+                _id: 0,
+              },
+            },
+          ],
+          as: "ownerDetails",
+        },
+      },
+      {
+        $unwind: { path: "$ownerDetails", preserveNullAndEmptyArrays: true },
+      },
+
+      {
+        $lookup: {
+          from: "lists",
+          let: { boardId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$board", "$$boardId"] },
+              },
+            },
+            {
+              $count: "totallists",
+            },
+          ],
+          as: "lists",
+        },
+      },
+      {
+        $unwind: { path: "$lists", preserveNullAndEmptyArrays: true },
+      },
+
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          ownerDetails: 1,
+          listcount: { $cond: ["$lists.totallists", "$lists.totallists", 0] },
+        },
+      },
+    ]);
     res.status(200).json({ boards });
   } catch (error) {
     console.log("Error occurred while getting boards:", error);

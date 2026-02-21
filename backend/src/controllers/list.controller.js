@@ -3,6 +3,7 @@ import listSchema from "../models/listSchema.js";
 import taskSchema from "../models/taskSchema.js";
 import commentSchema from "../models/commentSchema.js";
 import { order_resolver } from "../utils/order_resolver.js";
+import mongoose from "mongoose";
 const AddList = async (req, res, next) => {
   const { board_id } = req.params;
   const { list_name } = req.body;
@@ -117,8 +118,29 @@ const ChangeOrder = async (req, res, next) => {
 };
 
 const getLists = async (req, res, next) => {
-  const { board_id } = req.params;
-  const { page } = req.query;
+const { board_id } = req.params;
+let { page, operator, value } = req.query;
+value = Number(value);
+
+let matchStage = { $match: {} };
+
+if (operator && !isNaN(value)) {
+  let operation;
+
+  if (operator === "gt") operation = "$gt";
+  else if (operator === "gte") operation = "$gte";
+  else if (operator === "lt") operation = "$lt";
+  else if (operator === "lte") operation = "$lte";
+  else if (operator === "eq") operation = "$eq";
+  else return res.status(400).send("Operator is not valid");
+
+  matchStage = {
+    $match: {
+      totalTasks: { [operation]: value },
+    },
+  };
+}
+  page = page || 0;
   if (!board_id)
     return res.status(400).json({ msg: "select a board to get lists" });
   try {
@@ -126,13 +148,78 @@ const getLists = async (req, res, next) => {
     if (!board) {
       return res.status(400).send("Board not found");
     }
-    const lists = await listSchema
-      .find({ board: board_id })
-      .skip(page * 10)
-      .limit(10)
-      .sort({ order: 1 });
+    const lists = await listSchema.aggregate([
+      {
+        $match: {
+          board: new mongoose.Types.ObjectId(board_id),
+        },
+      },
+      {
+        $lookup: {
+          from: "tasks",
+          let: { listId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$list", "$$listId"] },
+              },
+            },
+            {
+              $facet: {
+                totalCount: [{ $count: "totalTasks" }],
+                finished: [
+                  {
+                    $match: {
+                      status: true,
+                    },
+                  },
+                  {
+                    $count: "total",
+                  },
+                ],
+              },
+            },
+            {
+              $unwind: {
+                path: "$totalCount",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            {
+              $unwind: { path: "$finished", preserveNullAndEmptyArrays: true },
+            },
+            {
+              $project: {
+                totalTasks: "$totalCount.totalTasks",
+                finishedTasks: "$finished.total",
+              },
+            },
+          ],
+          as: "otherData",
+        },
+      },
+      {
+        $unwind: "$otherData",
+      },
+      {
+        $project: {
+          name: 1,
+          order: 1,
+          totalTasks: {
+            $cond: ["$otherData.totalTasks", "$otherData.totalTasks", 0],
+          },
+          finishedTasks: {
+            $cond: ["$otherData.finishedTasks", "$otherData.finishedTasks", 0],
+          },
+        },
+      },
+      matchStage,
+      { $sort: { order: 1 } },
+      { $skip: page * 10 },
+      { $limit: 10 },
+    ]);
 
-    res.status(200).json({ lists: lists });
+    res.status(200).json({ lists });
   } catch (error) {
     console.log("Error occurred while getting lists:", error);
     res.status(500).send("Internal Server Error");

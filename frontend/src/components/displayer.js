@@ -7,13 +7,17 @@ function truncate(text, length = 22) {
   return text.length > length ? text.slice(0, length) + "..." : text;
 }
 
-export default function Displayer({ name, owner, id, onClickHandler }) {
+export default function Displayer({ name, owner, id, onClickHandler, listCount }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({id});
+    useSortable({ id });
+
   const style = {
     transition,
     transform: CSS.Transform.toString(transform),
   };
+
+  const safeListCount = listCount ?? 0;
+
   return (
     <div
       ref={setNodeRef}
@@ -22,16 +26,16 @@ export default function Displayer({ name, owner, id, onClickHandler }) {
       style={style}
       onClick={() => onClickHandler(id)}
       className="w-full max-w-md 
-                    flex items-center justify-between gap-3
-                    px-4 py-2.5 
-                    mb-3
-                    border border-zinc-800
-                    bg-zinc-950
-                    rounded-sm
-                    hover:border-zinc-600 hover:bg-zinc-900
-                    transition-all duration-150"
+                 flex items-center justify-between gap-3
+                 px-4 py-2.5 
+                 mb-3
+                 border border-zinc-800
+                 bg-zinc-950
+                 rounded-sm
+                 hover:border-zinc-600 hover:bg-zinc-900
+                 transition-all duration-150"
     >
-      {/* Left Section (Owner + optional ID) */}
+      {/* Left Section */}
       <div className="flex flex-col min-w-0">
         {owner && (
           <span className="text-[11px] text-zinc-500 uppercase tracking-wider truncate">
@@ -44,9 +48,14 @@ export default function Displayer({ name, owner, id, onClickHandler }) {
             #{id.slice(-4)}
           </span>
         )}
+
+        {/* List Count */}
+        <span className="text-[10px] text-zinc-400 mt-1">
+          Lists: {safeListCount}
+        </span>
       </div>
 
-      {/* Name (Main focus) */}
+      {/* Name */}
       <span className="text-sm font-semibold text-white truncate flex-1 text-right">
         {truncate(name, 30)}
       </span>
