@@ -28,7 +28,7 @@ export default function dashboard() {
           },
         },
       );
-      onClickBoard(activeBoard);
+      setLists((prev) => [response.data.new_list, ...prev]);
     } catch (error) {
       console.log(error);
     }
@@ -70,7 +70,7 @@ export default function dashboard() {
       console.log(error);
     }
   }
-  async function onClickList(id) {
+  async function onClickList(id, page) {
     try {
       const tasks = await axios.get(
         `${process.env.NEXT_PUBLIC_BASE_URL}/task/gettasks/${id}`,
@@ -78,10 +78,21 @@ export default function dashboard() {
           headers: {
             Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
           },
+          params: {
+            page,
+          },
         },
       );
       setActiveList(id);
-      setTasks(tasks.data);
+      if (page > 0) {
+        setTasks((prev) => {
+          const exsisting_tasks = new Set(prev.map((b) => b._id));
+          const filtered_tasks = tasks.data.filter(
+            (b) => !exsisting_tasks.has(b._id),
+          );
+          return [...prev, ...filtered_tasks];
+        });
+      } else setTasks(tasks.data);
     } catch (error) {
       console.log(error);
     }
@@ -116,6 +127,11 @@ export default function dashboard() {
           },
         },
       );
+      setTasks((prev) =>
+        prev.map((task) =>
+          task._id === id ? { ...task, status: !task.status } : task,
+        ),
+      );
     } catch (err) {
       console.error("Failed to update task status:", err);
     }
@@ -133,8 +149,14 @@ export default function dashboard() {
           },
         },
       );
-      console.log(response);
-      onClickList(activeList);
+      setTasks((prev) => {
+        return prev.map((item) => {
+         return item._id == id
+            ? { ...item, collabrators: [...item.collabrators, response.data.assignedTo] }
+            : item;
+        });
+      });
+
     } catch (error) {
       console.log(error);
     }
@@ -198,7 +220,8 @@ export default function dashboard() {
     } catch (error) {}
   }
 
-  async function handlelistSearch({ operator, value }) {
+  async function handlelistSearch({ operator, value, page }) {
+    console.log(page);
     try {
       const lists = await axios.get(
         `${process.env.NEXT_PUBLIC_BASE_URL}/list/getlists/${activeBoard}`,
@@ -209,12 +232,30 @@ export default function dashboard() {
           params: {
             operator,
             value,
+            page,
           },
         },
       );
-      setLists(lists.data.lists);
+      if (page && page > 0) {
+        setLists((prev) => {
+          const exsisting_lists = new Set(prev.map((b) => b._id));
+          const filtered_lists = lists.data.lists.filter(
+            (b) => !exsisting_lists.has(b._id),
+          );
+          return [...prev, ...filtered_lists];
+        });
+      } else setLists(lists.data.lists);
     } catch (error) {
       console.log(error);
+    }
+  }
+  async function handleTaskScroll() {
+    if (!taskRef.current) return;
+    const current_pos =
+      taskRef.current.scrollTop + taskRef.current.clientHeight;
+    if (current_pos >= taskRef.current.scrollHeight - 1) {
+      const current_page = tasks.length / 10;
+      onClickList(activeBoard, tasks.length / 10);
     }
   }
   useEffect(() => {
@@ -270,6 +311,7 @@ export default function dashboard() {
         onUpdate={onUpdate}
         updateStatus={updateStatus}
         onAssignCollaborator={onAssignCollaborator}
+        handleTaskScroll={handleTaskScroll}
       />
     </div>
   );

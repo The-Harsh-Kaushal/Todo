@@ -154,7 +154,12 @@ const assignTask = async (req, res, next) => {
     }
     task.collabrators.push(collabrator._id);
     await task.save();
-    res.status(200).json({ msg: "Task assigned" });
+    const assignedTo = {
+      _id: collabrator._id , 
+      name: collabrator.name,
+      email:collabrator.email,
+    }
+    res.status(200).json({ assignedTo });
   } catch (err) {
     console.log("Error occurred while assigning task:", err);
     res.status(500).send("Internal Server Error");

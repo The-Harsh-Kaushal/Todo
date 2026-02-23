@@ -1,12 +1,36 @@
 "use client";
 
 import Logo from "@/components/Logo";
+import axios from "axios";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
 export default function Navbar() {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/user/logout`,
+        {},
+        {
+          headers: {
+            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+          },
+        },
+      );
+    } catch (err) {
+      console.log(err);
+    }
+    localStorage.removeItem("accesstoken");
+    router.push("/");
+  };
+
   return (
     <nav
       className="w-full px-5 py-4 flex items-center justify-between 
-                    bg-black/60 backdrop-blur-xl 
-                    border-b border-zinc-800"
+                 bg-black/60 backdrop-blur-xl 
+                 border-b border-zinc-800"
     >
       {/* Left: Logo */}
       <div className="flex items-center gap-3">
@@ -20,20 +44,23 @@ export default function Navbar() {
 
       {/* Right: Menu */}
       <div className="flex items-center gap-6 text-sm font-medium text-zinc-300">
-        {/* {isAuthPage &&  <button className="hover:text-white transition">
-          Home
-        </button>} */}
+        <Link href="/dashboard" className="hover:text-white transition">
+          Dashboard
+        </Link>
 
-        {/* <button className="hover:text-white transition">
-          About
-        </button>
+        <Link href="/profile" className="hover:text-white transition">
+          Profile
+        </Link>
 
-       { isAuthPage&& <button className="bg-linear-to-r from-indigo-500 to-purple-600 
-                           text-white px-4 py-2 rounded-xl 
-                           shadow-md hover:scale-105 active:scale-95 
-                           transition-all duration-200">
+        <button
+          onClick={handleLogout}
+          className="bg-linear-to-r from-indigo-500 to-purple-600 
+                     text-white px-4 py-2 rounded-xl 
+                     shadow-md hover:scale-105 active:scale-95 
+                     transition-all duration-200"
+        >
           Logout
-        </button>} */}
+        </button>
       </div>
     </nav>
   );

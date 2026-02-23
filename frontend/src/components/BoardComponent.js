@@ -1,15 +1,13 @@
-import React, { useState } from "react";
+import React, { use, useEffect, useRef, useState } from "react";
 import CreateButton from "@/components/CreationButton";
 import Searchbar from "@/components/Searchbar";
 import Displayer from "@/components/displayer";
 import axios from "axios";
 
-export default function BoardComponent({
-  boards,
-  setBoards,
-  onClickBoard
-}) {
+export default function BoardComponent({ boards, setBoards, onClickBoard }) {
   const [boardsOpen, setBoardsOpen] = useState(true);
+  const [value, setValue] = useState("");
+  const scrollRef = useRef(null);
   async function BoardCreation(payload) {
     try {
       const response = await axios.post(
@@ -23,21 +21,22 @@ export default function BoardComponent({
           },
         },
       );
-      const boards = await axios.get(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/board/boards`,
-          {
-            headers: {
-              Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
-            },
-          },
-        );
-        setBoards(boards.data.boards);
+      setBoards((prev)=> [response.data.new_board,...prev]);
     } catch (error) {
       console.log(error);
     }
   }
+  async function handleScroll() {
 
-  async function handleboardSearch(word) {
+    if (!scrollRef.current) return;
+    const current_pos =
+      scrollRef.current.scrollTop + scrollRef.current.clientHeight;
+    if (current_pos >= scrollRef.current.scrollHeight - 1) {
+      const current_page = boards.length / 10;
+      handleboardSearch(value, current_page);
+    }
+  }
+  async function handleboardSearch(word, page) {
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BASE_URL}/board/boards`,
@@ -47,23 +46,25 @@ export default function BoardComponent({
           },
           params: {
             startswith: word,
+            page,
           },
         },
       );
       const boardArray = response.data.boards;
-      setBoards((prev) => {
-        const merged = [...boardArray, ...prev];
-
-        const unique = Array.from(
-          new Map(merged.map((b) => [b._id, b])).values(),
-        );
-
-        return unique;
-      });
+      if (page && page > 0) {
+        setBoards((prev) => {
+          const exsisting_boards = new Set(prev.map(item => item._id));
+          const filterred_board = boardArray.filter(item=> !exsisting_boards.has(item._id));
+          return [...prev, ...filterred_board];
+        });
+      }
+      else
+      setBoards(boardArray);
     } catch (err) {
       console.log(err);
     }
   }
+
   return (
     <div
       className={`${
@@ -98,8 +99,16 @@ export default function BoardComponent({
 
       {/* Content */}
       {boardsOpen && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scroll flex flex-col gap-3">
-          <Searchbar onSearch={handleboardSearch} />
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto p-4 space-y-2 custom-scroll flex flex-col gap-3"
+        >
+          <Searchbar
+            onSearch={handleboardSearch}
+            value={value}
+            setValue={setValue}
+          />
           {boards.map((item, index) => (
             <div
               key={item._id}

@@ -1,18 +1,20 @@
 import React, { useState } from "react";
 
-export default function ListSearchBar({ onSearch }) {
-  const [operator, setOperator] = useState("eq");
-  const [value, setValue] = useState("");
-
+export default function ListSearchBar({
+  onSearch,
+  value,
+  setValue,
+  operator,
+  setOperator,
+}) {
   const handleSubmit = () => {
     if (!value.trim()) return;
 
     onSearch?.({
       operator,
       value: value.trim(),
+      page: 0
     });
-
-    setValue("");
   };
 
   const handleKeyDown = (e) => {
@@ -23,7 +25,6 @@ export default function ListSearchBar({ onSearch }) {
 
   return (
     <div className="w-full min-w-0 flex items-center gap-2">
-      
       {/* Operator Dropdown */}
       <select
         value={operator}

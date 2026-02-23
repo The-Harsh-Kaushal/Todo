@@ -1,6 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import React, { useState } from "react";
+import axios from "axios";
+import React, { useRef, useState } from "react";
 
 function truncate(text, length = 40) {
   if (!text) return "";
@@ -29,7 +30,8 @@ export default function TaskDisplayer({
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [newCollaborator, setNewCollaborator] = useState("");
-
+  const debounceRef = useRef(null);
+  const [profiles, setProfiles] = useState([]);
   const [formData, setFormData] = useState({
     name,
     status,
@@ -59,11 +61,39 @@ export default function TaskDisplayer({
 
   function handleAssignCollaborator(e) {
     e.preventDefault();
-
     if (!newCollaborator.trim()) return;
-
     onAssignCollaborator(id, newCollaborator.trim());
     setNewCollaborator("");
+  }
+
+  function handleCollabratorInput(e) {
+    const value = e.target.value;
+    setNewCollaborator(value);
+
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/user/profiles`,
+          {
+            headers: {
+              Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+            },
+            params: { word: value },
+          },
+        );
+        setProfiles(response.data.profiles);
+      } catch (err) {
+        console.error(err);
+      }
+    }, 300);
+  }
+  function onClickUserProfile(item) {
+    setNewCollaborator(item.email);
+    setProfiles([]);
   }
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id });
@@ -141,131 +171,176 @@ export default function TaskDisplayer({
       </div>
 
       {/* Expanded */}
-      <div
-        className={`overflow-hidden transition-all duration-300 ${
-          expanded ? "max-h-[650px] mt-4" : "max-h-0"
-        }`}
-      >
-        <div className="border-t border-zinc-800 pt-4 space-y-4">
-          {!editing ? (
-            <>
-              {/* Description */}
-              {description && (
-                <p className="text-sm text-zinc-400 leading-relaxed">
-                  {description}
-                </p>
-              )}
-
-              {/* Collaborators Section (always shown when expanded) */}
-              <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
-                <label className="text-zinc-500 text-xs font-semibold">
-                  Collaborators
-                </label>
-
-                {/* List of collaborators */}
-                <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
-                  {collaborators.length > 0 ? (
-                    collaborators.map((col, index) => (
-                      <span
-                        key={index}
-                        className="text-xs px-2 py-1 bg-zinc-800 text-zinc-300 rounded-sm"
-                      >
-                        {truncate(col.name, 18)}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-xs text-zinc-500 italic">
-                      No collaborators assigned
-                    </span>
-                  )}
-                </div>
-
-                {/* Add collaborator input */}
-                <form
-                  onSubmit={handleAssignCollaborator}
-                  className="flex gap-2 mt-1"
-                >
-                  <input
-                    type="text"
-                    placeholder="Assign collaborator"
-                    className="flex-1 bg-zinc-900 border border-zinc-800 px-2 py-1 text-white outline-none focus:border-zinc-600 text-xs"
-                    value={newCollaborator}
-                    onChange={(e) => setNewCollaborator(e.target.value)}
-                  />
-                  <button
-                    type="submit"
-                    className="px-3 py-1 text-xs bg-zinc-800 hover:bg-zinc-700 text-white transition rounded-sm"
-                  >
-                    ➕
-                  </button>
-                </form>
-              </div>
-            </>
-          ) : (
-            <>
-              {/* Edit Form */}
-              <div className="space-y-3 text-sm">
-                {/* Name */}
-                <div>
-                  <label className="text-zinc-500 text-xs">Task Name</label>
-                  <input
-                    className="w-full mt-1 bg-zinc-900 border border-zinc-800 px-2 py-1 text-white outline-none focus:border-zinc-600"
-                    value={formData.name}
-                    onChange={(e) => handleChange("name", e.target.value)}
-                  />
-                </div>
-
-                {/* Deadline */}
-                <div>
-                  <label className="text-zinc-500 text-xs">Deadline</label>
-                  <input
-                    type="date"
-                    className="w-full mt-1 bg-zinc-900 border border-zinc-800 px-2 py-1 text-white outline-none focus:border-zinc-600"
-                    value={formData.deadline}
-                    onChange={(e) => handleChange("deadline", e.target.value)}
-                  />
-                </div>
-
-                {/* Priority */}
-                <div>
-                  <label className="text-zinc-500 text-xs">
-                    Priority (1-4)
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="4"
-                    className="w-full mt-1 bg-zinc-900 border border-zinc-800 px-2 py-1 text-white outline-none focus:border-zinc-600"
-                    value={formData.priority}
-                    onChange={(e) => handleChange("priority", e.target.value)}
-                  />
-                </div>
-
+      {expanded && (
+        <div
+          className={` transition-all duration-300 ${
+            expanded ? " mt-4" : "max-h-0"
+          }`}
+        >
+          <div className="border-t border-zinc-800 pt-4 space-y-4">
+            {!editing ? (
+              <>
                 {/* Description */}
-                <div>
-                  <label className="text-zinc-500 text-xs">Description</label>
-                  <textarea
-                    rows={3}
-                    className="w-full mt-1 bg-zinc-900 border border-zinc-800 px-2 py-1 text-white outline-none focus:border-zinc-600 resize-none"
-                    value={formData.description}
-                    onChange={(e) =>
-                      handleChange("description", e.target.value)
-                    }
-                  />
-                </div>
+                {description && (
+                  <p className="text-sm text-zinc-400 leading-relaxed">
+                    {description}
+                  </p>
+                )}
 
-                {/* Save */}
-                <button
-                  onClick={handleSave}
-                  className="w-full py-1.5 mt-2 text-sm bg-zinc-800 hover:bg-zinc-700 transition text-white"
-                >
-                  ✔ Save Changes
-                </button>
-              </div>
-            </>
-          )}
+                {/* Collaborators Section (always shown when expanded) */}
+                <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                  <label className="text-zinc-500 text-xs font-semibold">
+                    Collaborators
+                  </label>
+
+                  {/* List of collaborators */}
+                  <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
+                    {collaborators.length > 0 ? (
+                      collaborators.map((col, index) => (
+                        <span
+                          key={index}
+                          className="text-xs px-2 py-1 bg-zinc-800 text-zinc-300 rounded-sm"
+                        >
+                          {truncate(col.name, 18)}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xs text-zinc-500 italic">
+                        No collaborators assigned
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Add collaborator input */}
+                  <form
+                    onSubmit={handleAssignCollaborator}
+                    className="flex gap-2 mt-1 relative"
+                  >
+                    <input
+                      type="text"
+                      placeholder="Assign collaborator"
+                      className="flex-1 bg-zinc-900 border border-zinc-800 px-2 py-1 text-white outline-none focus:border-zinc-600 text-xs"
+                      value={newCollaborator}
+                      onChange={(e) => handleCollabratorInput(e)}
+                    />
+                    <button
+                      type="submit"
+                      className="px-3 py-1 text-xs bg-zinc-800 hover:bg-zinc-700 text-white transition rounded-sm"
+                    >
+                      ➕
+                    </button>
+
+                    {/* user profiles dropdown */}
+                    {profiles.length > 0 && (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="
+                    absolute left-0 top-0 -translate-y-full mt-1
+                    w-full
+                    max-h-30
+                    overflow-y-auto
+                    bg-zinc-900
+                    border border-zinc-800
+                    rounded-sm
+                    shadow-lg
+                  "
+                      >
+                        {profiles.map((item) => (
+                          <div
+                            onClick={(e) => onClickUserProfile(item)}
+                            key={item.id}
+                            className="
+                        flex items-center justify-between
+                        px-3 py-2
+                        text-xs
+                        text-zinc-300
+                        hover:bg-zinc-800
+                        transition
+                        cursor-pointer
+                      "
+                          >
+                            <span className="font-medium truncate">
+                              {item.name}
+                            </span>
+
+                            <span className="text-zinc-500 truncate ml-3">
+                              {item.email}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </form>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Edit Form */}
+                <div className="space-y-3 text-sm">
+                  {/* Name */}
+                  <div>
+                    <label className="text-zinc-500 text-xs">Task Name</label>
+                    <input
+                      className="w-full mt-1 bg-zinc-900 border border-zinc-800 px-2 py-1 text-white outline-none focus:border-zinc-600"
+                      value={formData.name}
+                      onChange={(e) => handleChange("name", e.target.value)}
+                    />
+                  </div>
+
+                  {/* Deadline */}
+                  <div>
+                    <label className="text-zinc-500 text-xs">Deadline</label>
+                    <input
+                      type="date"
+                      className="w-full mt-1 bg-zinc-900 border border-zinc-800 px-2 py-1 text-white outline-none focus:border-zinc-600"
+                      value={formData.deadline}
+                      onChange={(e) => handleChange("deadline", e.target.value)}
+                    />
+                  </div>
+
+                  {/* Priority */}
+                  <div>
+                    <label className="text-zinc-500 text-xs">
+                      Priority (1-4)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="4"
+                      className="w-full mt-1 bg-zinc-900 border border-zinc-800 px-2 py-1 text-white outline-none focus:border-zinc-600"
+                      value={formData.priority}
+                      onChange={(e) => handleChange("priority", e.target.value)}
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="text-zinc-500 text-xs">Description</label>
+                    <textarea
+                      rows={3}
+                      className="w-full mt-1 bg-zinc-900 border border-zinc-800 px-2 py-1 text-white outline-none focus:border-zinc-600 resize-none"
+                      value={formData.description}
+                      onChange={(e) =>
+                        handleChange("description", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  {/* Save */}
+                  <button
+                    onClick={handleSave}
+                    className="w-full py-1.5 mt-2 text-sm bg-zinc-800 hover:bg-zinc-700 transition text-white"
+                  >
+                    ✔ Save Changes
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+             
         </div>
-      </div>
+        
+      )}
     </div>
   );
 }

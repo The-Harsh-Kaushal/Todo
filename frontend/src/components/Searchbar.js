@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 
-export default function Searchbar({ onSearch }) {
-  const [value, setValue] = useState("");
+export default function Searchbar({ onSearch,value,setValue }) {
 
   const handleSubmit = () => {
-    if (!value.trim()) return;
+    // if (!value.trim()) return;
     onSearch?.(value);
-    setValue("");
   };
 
   const handleKeyDown = (e) => {

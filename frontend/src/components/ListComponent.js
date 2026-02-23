@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import CreateButton from "@/components/CreationButton";
 import ListSearchBar from "@/components/ListSearchBar";
 import ListDisplayer from "@/components/listdisplayer";
@@ -16,6 +16,18 @@ export default function ListComponent({
   onClickList,
 }) {
   const [listsOpen, setListsOpen] = useState(true);
+  const [value, setValue] = useState("");
+  const [operator, setOperator] = useState("eq");
+  const listRef = useRef(null);
+  async function handleScroll() {
+    if (!listRef.current) return;
+    const current_pos =
+      listRef.current.scrollTop + listRef.current.clientHeight;
+    if (current_pos >= listRef.current.scrollHeight - 1) {
+      const current_page = lists.length / 10;
+      handlelistSearch({ operator, value, page: current_page });
+    }
+  }
 
   return (
     <div
@@ -51,8 +63,18 @@ export default function ListComponent({
 
       {/* Content */}
       {listsOpen && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scroll flex flex-col">
-          <ListSearchBar onSearch={handlelistSearch} />
+        <div
+          ref={listRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto p-4 space-y-2 custom-scroll flex flex-col"
+        >
+          <ListSearchBar
+            onSearch={handlelistSearch}
+            value={value}
+            setValue={setValue}
+            operator={operator}
+            setOperator={setOperator}
+          />
           <DndContext
             collisionDetection={closestCorners}
             onDragEnd={handleDragEndList}

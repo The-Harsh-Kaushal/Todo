@@ -97,13 +97,23 @@ const getBoards = async (req, res, next) => {
 };
 
 const creteBoard = async (req, res, next) => {
-  const { id } = req.user;
+  const { id,name,email } = req.user;
   const board_name = req.body.name;
   if (!board_name) return res.status(400).json({ msg: "enter a vlaid name " });
   try {
+    
     const board = new boardSchema({ name: board_name, owner: id });
     await board.save();
-    res.status(200).json({ msg: "Board created" });
+    const new_board = {
+      _id: board._id,
+      name : board.name,
+      ownerDetails:{
+        name,
+        email,
+      },
+      listcount: 0
+    }
+    res.status(200).json({ new_board });
   } catch (error) {
     console.log("Error occurred while creating board:", error);
     res.status(500).send("Internal Server Error");

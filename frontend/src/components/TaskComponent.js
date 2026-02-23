@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import CreateButton from "@/components/CreationButton";
 import { closestCorners, DndContext } from "@dnd-kit/core";
 import {
@@ -14,9 +14,11 @@ export default function TaskComponent({
   onUpdate,
   updateStatus,
   onAssignCollaborator,
+  handleTaskScroll,
 }) {
   const [TasksOpen, setTasksOpen] = useState(true);
-
+  const taskRef = useRef(null);
+ 
   return (
     <div
       className={`${
@@ -51,7 +53,10 @@ export default function TaskComponent({
 
       {/* Content */}
       {TasksOpen && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scroll">
+        <div 
+        ref={taskRef}
+        onScroll={handleTaskScroll}
+        className="flex-1 overflow-y-auto p-4 space-y-2 custom-scroll">
           <DndContext
             collisionDetection={closestCorners}
             onDragEnd={handleDragEndTask}

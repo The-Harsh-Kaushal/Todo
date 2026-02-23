@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function CreateButton({ type = "task", onCreate }) {
+export default function CreateButton({ type = "task", onCreate  }) {
   const [open, setOpen] = useState(false);
 
   const [formData, setFormData] = useState({

@@ -41,7 +41,13 @@ const AddList = async (req, res, next) => {
       order: new_order,
     });
     await list.save();
-    res.status(200).json({ msg: "List added" });
+    const new_list = {
+      name: list.name,
+      order: list.order,
+      totalTasks: 0,
+      finishedTasks: 0,
+    };
+    res.status(200).json({ new_list});
   } catch (err) {
     console.log("Error occurred while adding list:", err);
     res.status(500).send("Internal Server Error");
@@ -118,28 +124,28 @@ const ChangeOrder = async (req, res, next) => {
 };
 
 const getLists = async (req, res, next) => {
-const { board_id } = req.params;
-let { page, operator, value } = req.query;
-value = Number(value);
+  const { board_id } = req.params;
+  let { page, operator, value } = req.query;
+  value = Number(value);
 
-let matchStage = { $match: {} };
+  let matchStage = { $match: {} };
 
-if (operator && !isNaN(value)) {
-  let operation;
+  if (operator && !isNaN(value)) {
+    let operation;
 
-  if (operator === "gt") operation = "$gt";
-  else if (operator === "gte") operation = "$gte";
-  else if (operator === "lt") operation = "$lt";
-  else if (operator === "lte") operation = "$lte";
-  else if (operator === "eq") operation = "$eq";
-  else return res.status(400).send("Operator is not valid");
+    if (operator === "gt") operation = "$gt";
+    else if (operator === "gte") operation = "$gte";
+    else if (operator === "lt") operation = "$lt";
+    else if (operator === "lte") operation = "$lte";
+    else if (operator === "eq") operation = "$eq";
+    else return res.status(400).send("Operator is not valid");
 
-  matchStage = {
-    $match: {
-      totalTasks: { [operation]: value },
-    },
-  };
-}
+    matchStage = {
+      $match: {
+        totalTasks: { [operation]: value },
+      },
+    };
+  }
   page = page || 0;
   if (!board_id)
     return res.status(400).json({ msg: "select a board to get lists" });
