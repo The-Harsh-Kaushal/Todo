@@ -1,16 +1,16 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 
-export default function Searchbar({ onSearch,value,setValue }) {
+export default function Searchbar({ onSearch, value, setValue }) {
+  const debounce = useRef(null);
 
-  const handleSubmit = () => {
-    // if (!value.trim()) return;
-    onSearch?.(value);
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      handleSubmit();
+  const handleOnChange = (e) => {
+    setValue(e.target.value);
+    if (debounce.current) {
+      clearTimeout(debounce.current);
     }
+    debounce.current = setTimeout(() => {
+      onSearch(e.target.value);
+    },300);
   };
 
   return (
@@ -18,8 +18,7 @@ export default function Searchbar({ onSearch,value,setValue }) {
       <input
         type="text"
         value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={handleKeyDown}
+        onChange={(e) => handleOnChange(e)}
         placeholder="Search..."
         className="flex-1 px-4 py-2
                    bg-zinc-900 border border-zinc-800
@@ -28,18 +27,6 @@ export default function Searchbar({ onSearch,value,setValue }) {
                    focus:outline-none focus:border-zinc-600
                    transition"
       />
-
-      <button
-        onClick={handleSubmit}
-        className="px-4 py-2
-                   bg-zinc-800 border border-zinc-700
-                   text-sm text-white
-                   rounded-md
-                   hover:bg-zinc-700
-                   transition"
-      >
-        Send
-      </button>
     </div>
   );
 }

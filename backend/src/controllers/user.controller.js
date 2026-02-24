@@ -48,13 +48,13 @@ const getProfiles = async (req, res, next) => {
 };
 const resetpass = async (req, res, next) => {
   const { id } = req.user;
-  const { newPass, currentPass } = req.body;
+  const { currentPass, newPass } = req.body;
   if (!newPass || !currentPass)
     return res.status(400).send("fill all the fields");
   try {
     const user = await userSchema.findById(id);
-    const isMatch = await bcrypt.compare(user.password, currentPass);
-    console.log(isMatch);
+    const isMatch = await bcrypt.compare(currentPass, user.password);
+
     if (!isMatch) return res.status(401).send("wrong password");
     const hashed_new_pass = await bcrypt.hash(newPass, SALT_ROUNDS);
     user.password = hashed_new_pass;
@@ -66,18 +66,41 @@ const resetpass = async (req, res, next) => {
   }
 };
 const forgotpassreq = async (req, res, next) => {
-  const { id, name, email } = req.user;
+  const { email } = req.body;
+  if (!email) return res.status(400).send("send the email ");
   try {
-    const token = jwt.sign({ id, name, email }, JWT_SECRET, {
-      expiresIn: "10m",
-    });
-    const link = `${process.env.SERVER_BASE_URL}/user/forgotpass/${token}`;
-    const html = forgot_pass_html(name, link);
-    sendEmail(email, "Forgot Password", html);
+    const user = await userSchema.findOne({ email });
+    if (!user) return res.staus(400).send("no such user exsist");
+    const token = jwt.sign(
+      { id: user._id, name: user.name, email: user.email },
+      JWT_SECRET,
+      {
+        expiresIn: "10m",
+      },
+    );
+    const link = `${process.env.SERVER_BASE_URL}/static/forgotpasspage.html?token=${token}`;
+    const { subject, html } = forgot_pass_html(user.name, link);
+    sendEmail(email, subject, html);
     return res.status(200).send("sucessful sent");
   } catch (err) {
     console.log(err);
     res.status(500).send("internal server error");
   }
 };
-export default { logout, getProfiles, resetpass, forgotpassreq };
+const forgotPass = async (req, res, next) => {
+  const { token, password } = req.body;
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    const { iat, exp, ...rest } = payload;
+    const user = await userSchema.findById(rest.id);
+    if (!user) return rest.status(400).send("No such user exsist");
+    const hashed_new_pass = await bcrypt.hash(password, SALT_ROUNDS);
+    user.password = hashed_new_pass;
+    await user.save();
+    return res.status(200).send("password sucessfully changed");
+  } catch (err) {
+    console.log(err);
+    return res.staus(400).send("token expired");
+  }
+};
+export default { logout, getProfiles, resetpass, forgotpassreq, forgotPass };

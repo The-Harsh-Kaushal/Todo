@@ -75,7 +75,9 @@ export default function ProfilePage() {
 
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/user/forgetpassreq`,
-        {},
+        {
+          email: localStorage.getItem("user"),
+        },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,

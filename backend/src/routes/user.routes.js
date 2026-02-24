@@ -25,8 +25,9 @@ Router.post(
 );
 Router.post(
   "/forgetpassreq",
-  verifySession,
   userControllers.forgotpassreq,
   (req, res) => {},
 );
+Router.post("/forgotpass",userControllers.forgotPass,(req,res)=>{
+})
 export default Router;

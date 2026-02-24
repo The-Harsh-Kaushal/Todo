@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
 
-export default function AuthForm({ mode,authHandler}) {
+export default function AuthForm({ mode, authHandler }) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
   });
+
+  const [message, setMessage] = useState("");
 
   function handleChange(e) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -16,7 +19,38 @@ export default function AuthForm({ mode,authHandler}) {
 
   function handleSubmit(e) {
     e.preventDefault();
-    authHandler(mode,formData);
+    authHandler(mode, formData);
+  }
+
+  async function handleForgotPassword() {
+    if (!formData.email) {
+      setMessage("Please enter your email first.");
+      return;
+    }
+
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/user/forgetpassreq`,
+        {
+          email: formData.email
+        },
+        {
+          headers: {
+            Authorization: `${localStorage.getItem("accesstoken")}`,
+          },
+        },
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessage("Password reset link sent to your email.");
+      } else {
+        setMessage(data.message || "Something went wrong.");
+      }
+    } catch (error) {
+      setMessage("Server error. Please try again.");
+    }
   }
 
   return (
@@ -75,14 +109,33 @@ export default function AuthForm({ mode,authHandler}) {
               className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
             />
 
+            {/* Forgot Password Link (Only in Login Mode) */}
+            {mode === "login" && (
+              <div className="text-right -mt-3">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-sm text-indigo-600 hover:underline"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            )}
+
             <motion.button
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               type="submit"
-              className="mt-2 bg-linear-to-r from-indigo-500 to-purple-600 text-white py-3 rounded-xl font-semibold tracking-wide shadow-lg"
+              className="mt-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-3 rounded-xl font-semibold tracking-wide shadow-lg"
             >
               {mode === "signup" ? "Create Account" : "Log In"}
             </motion.button>
+
+            {message && (
+              <p className="text-sm text-center text-gray-600 mt-2">
+                {message}
+              </p>
+            )}
           </div>
         </motion.form>
       </AnimatePresence>

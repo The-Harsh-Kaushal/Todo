@@ -5,15 +5,22 @@ import listSchema from "../models/listSchema.js";
 import commentSchema from "../models/commentSchema.js";
 
 const getBoards = async (req, res, next) => {
-  const page = Number(req.query.page) || 0;
-  const startswith = req.query.startswith;
+  let { offset = 0, limit = 10, startswith } = req.query;
+
+  // convert safely to numbers
+  offset = Math.max(parseInt(offset) || 0, 0);
+  limit = Math.max(parseInt(limit) || 10, 1);
+
   let matchStage = { $match: {} };
+
   if (startswith) {
     const usersid = await boardSchema.find(
       { name: { $regex: `^${startswith}`, $options: "i" } },
       { _id: 1 },
     );
+
     const userIds = usersid.map((item) => item._id);
+
     matchStage = {
       $match: {
         $or: [
@@ -24,15 +31,14 @@ const getBoards = async (req, res, next) => {
     };
   }
 
-  console.log(page);
   try {
     const boards = await boardSchema.aggregate([
       matchStage,
       {
-        $skip: page * 10,
+        $skip: offset,
       },
       {
-        $limit: 10,
+        $limit: limit,
       },
       {
         $lookup: {
@@ -58,7 +64,6 @@ const getBoards = async (req, res, next) => {
       {
         $unwind: { path: "$ownerDetails", preserveNullAndEmptyArrays: true },
       },
-
       {
         $lookup: {
           from: "lists",
@@ -79,7 +84,6 @@ const getBoards = async (req, res, next) => {
       {
         $unwind: { path: "$lists", preserveNullAndEmptyArrays: true },
       },
-
       {
         $project: {
           _id: 1,
@@ -89,6 +93,7 @@ const getBoards = async (req, res, next) => {
         },
       },
     ]);
+
     res.status(200).json({ boards });
   } catch (error) {
     console.log("Error occurred while getting boards:", error);

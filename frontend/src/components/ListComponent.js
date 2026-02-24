@@ -14,6 +14,7 @@ export default function ListComponent({
   handlelistSearch,
   handleDragEndList,
   onClickList,
+  listStopScroll,
 }) {
   const [listsOpen, setListsOpen] = useState(true);
   const [value, setValue] = useState("");
@@ -24,8 +25,16 @@ export default function ListComponent({
     const current_pos =
       listRef.current.scrollTop + listRef.current.clientHeight;
     if (current_pos >= listRef.current.scrollHeight - 1) {
-      const current_page = lists.length / 10;
-      handlelistSearch({ operator, value, page: current_page });
+      const offset = lists.length;
+      const limit = Number(process.env.NEXT_PUBLIC_LIMIT);
+      const temp = listStopScroll.current;
+      if (
+        !temp ||
+        temp.operator != operator ||
+        temp.value != value ||
+        temp.lastPayload > 0
+      )
+        handlelistSearch({ operator, value, offset, limit });
     }
   }
 

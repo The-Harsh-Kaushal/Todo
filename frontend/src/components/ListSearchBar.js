@@ -13,7 +13,6 @@ export default function ListSearchBar({
     onSearch?.({
       operator,
       value: value.trim(),
-      page: 0
     });
   };
 

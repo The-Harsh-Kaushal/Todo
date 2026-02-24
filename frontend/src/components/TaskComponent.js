@@ -15,9 +15,9 @@ export default function TaskComponent({
   updateStatus,
   onAssignCollaborator,
   handleTaskScroll,
+  taskRef
 }) {
   const [TasksOpen, setTasksOpen] = useState(true);
-  const taskRef = useRef(null);
  
   return (
     <div

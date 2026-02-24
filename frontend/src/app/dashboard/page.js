@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { arrayMove } from "@dnd-kit/sortable";
 
@@ -14,6 +14,9 @@ export default function dashboard() {
   const [boards, setBoards] = useState([]);
   const [lists, setLists] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const listScrollStop = useRef(null);
+  const taskScrollStop = useRef(null);
+  const taskRef = useRef(null);
 
   async function ListCreation(payload) {
     try {
@@ -70,7 +73,7 @@ export default function dashboard() {
       console.log(error);
     }
   }
-  async function onClickList(id, page) {
+  async function onClickList(id, offset, limit) {
     try {
       const tasks = await axios.get(
         `${process.env.NEXT_PUBLIC_BASE_URL}/task/gettasks/${id}`,
@@ -79,12 +82,16 @@ export default function dashboard() {
             Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
           },
           params: {
-            page,
+            offset,
+            limit,
           },
         },
       );
       setActiveList(id);
-      if (page > 0) {
+      taskScrollStop.current = {
+        lastPayload: tasks.data.length,
+      };
+      if (offset && limit) {
         setTasks((prev) => {
           const exsisting_tasks = new Set(prev.map((b) => b._id));
           const filtered_tasks = tasks.data.filter(
@@ -92,7 +99,9 @@ export default function dashboard() {
           );
           return [...prev, ...filtered_tasks];
         });
-      } else setTasks(tasks.data);
+      } else {
+        setTasks(tasks.data);
+      }
     } catch (error) {
       console.log(error);
     }
@@ -151,12 +160,14 @@ export default function dashboard() {
       );
       setTasks((prev) => {
         return prev.map((item) => {
-         return item._id == id
-            ? { ...item, collabrators: [...item.collabrators, response.data.assignedTo] }
+          return item._id == id
+            ? {
+                ...item,
+                collabrators: [...item.collabrators, response.data.assignedTo],
+              }
             : item;
         });
       });
-
     } catch (error) {
       console.log(error);
     }
@@ -220,8 +231,7 @@ export default function dashboard() {
     } catch (error) {}
   }
 
-  async function handlelistSearch({ operator, value, page }) {
-    console.log(page);
+  async function handlelistSearch({ operator, value, offset, limit }) {
     try {
       const lists = await axios.get(
         `${process.env.NEXT_PUBLIC_BASE_URL}/list/getlists/${activeBoard}`,
@@ -232,11 +242,17 @@ export default function dashboard() {
           params: {
             operator,
             value,
-            page,
+            offset,
+            limit,
           },
         },
       );
-      if (page && page > 0) {
+      listScrollStop.current = {
+        operator,
+        value,
+        lastPayload: lists.data.lists.length,
+      };
+      if (offset && limit) {
         setLists((prev) => {
           const exsisting_lists = new Set(prev.map((b) => b._id));
           const filtered_lists = lists.data.lists.filter(
@@ -254,8 +270,10 @@ export default function dashboard() {
     const current_pos =
       taskRef.current.scrollTop + taskRef.current.clientHeight;
     if (current_pos >= taskRef.current.scrollHeight - 1) {
-      const current_page = tasks.length / 10;
-      onClickList(activeBoard, tasks.length / 10);
+      const offset = tasks.length;
+      const limit = Number(process.env.NEXT_PUBLIC_LIMIT);
+      if (!taskScrollStop || taskScrollStop.lastPayload > 0)
+        onClickList(activeBoard, offset, limit);
     }
   }
   useEffect(() => {
@@ -302,6 +320,7 @@ export default function dashboard() {
         handlelistSearch={handlelistSearch}
         handleDragEndList={handleDragEndList}
         onClickList={onClickList}
+        listStopScroll={listScrollStop}
       />
       {/* tasks */}
       <TaskComponent
@@ -312,6 +331,7 @@ export default function dashboard() {
         updateStatus={updateStatus}
         onAssignCollaborator={onAssignCollaborator}
         handleTaskScroll={handleTaskScroll}
+        taskRef={taskRef}
       />
     </div>
   );

@@ -8,6 +8,7 @@ export default function BoardComponent({ boards, setBoards, onClickBoard }) {
   const [boardsOpen, setBoardsOpen] = useState(true);
   const [value, setValue] = useState("");
   const scrollRef = useRef(null);
+  const stopScroll = useRef(null);
   async function BoardCreation(payload) {
     try {
       const response = await axios.post(
@@ -21,22 +22,27 @@ export default function BoardComponent({ boards, setBoards, onClickBoard }) {
           },
         },
       );
-      setBoards((prev)=> [response.data.new_board,...prev]);
+      setBoards((prev) => [response.data.new_board, ...prev]);
     } catch (error) {
       console.log(error);
     }
   }
   async function handleScroll() {
-
     if (!scrollRef.current) return;
     const current_pos =
       scrollRef.current.scrollTop + scrollRef.current.clientHeight;
     if (current_pos >= scrollRef.current.scrollHeight - 1) {
-      const current_page = boards.length / 10;
-      handleboardSearch(value, current_page);
+      const offset = boards.length;
+      const limit = Number(process.env.NEXT_PUBLIC_LIMIT);
+      if (
+        !stopScroll.current ||
+        stopScroll.current.word != value ||
+        stopScroll.current.lastpayload > 0
+      )
+        handleboardSearch(value, offset, limit);
     }
   }
-  async function handleboardSearch(word, page) {
+  async function handleboardSearch(word, offset, limit) {
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BASE_URL}/board/boards`,
@@ -46,20 +52,28 @@ export default function BoardComponent({ boards, setBoards, onClickBoard }) {
           },
           params: {
             startswith: word,
-            page,
+            offset,
+            limit,
           },
         },
       );
       const boardArray = response.data.boards;
-      if (page && page > 0) {
+      stopScroll.current = {
+        word,
+        lastpayload: boardArray.length,
+      };
+      if (offset && limit) {
         setBoards((prev) => {
-          const exsisting_boards = new Set(prev.map(item => item._id));
-          const filterred_board = boardArray.filter(item=> !exsisting_boards.has(item._id));
+          const exsisting_boards = new Set(prev.map((item) => item._id));
+          const filterred_board = boardArray.filter(
+            (item) => !exsisting_boards.has(item._id),
+          );
           return [...prev, ...filterred_board];
         });
       }
-      else
-      setBoards(boardArray);
+      else{
+        setBoards(boardArray);
+      }
     } catch (err) {
       console.log(err);
     }

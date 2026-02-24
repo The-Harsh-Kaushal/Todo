@@ -125,8 +125,13 @@ const ChangeOrder = async (req, res, next) => {
 
 const getLists = async (req, res, next) => {
   const { board_id } = req.params;
-  let { page, operator, value } = req.query;
+  let { offset = 0, limit = 10, operator, value } = req.query;
+
   value = Number(value);
+
+  // convert safely
+  offset = Math.max(parseInt(offset) || 0, 0);
+  limit = Math.max(parseInt(limit) || 10, 1);
 
   let matchStage = { $match: {} };
 
@@ -146,14 +151,16 @@ const getLists = async (req, res, next) => {
       },
     };
   }
-  page = page || 0;
+
   if (!board_id)
     return res.status(400).json({ msg: "select a board to get lists" });
+
   try {
     const board = await boardSchema.findById(board_id);
     if (!board) {
       return res.status(400).send("Board not found");
     }
+
     const lists = await listSchema.aggregate([
       {
         $match: {
@@ -174,14 +181,8 @@ const getLists = async (req, res, next) => {
               $facet: {
                 totalCount: [{ $count: "totalTasks" }],
                 finished: [
-                  {
-                    $match: {
-                      status: true,
-                    },
-                  },
-                  {
-                    $count: "total",
-                  },
+                  { $match: { status: true } },
+                  { $count: "total" },
                 ],
               },
             },
@@ -192,7 +193,10 @@ const getLists = async (req, res, next) => {
               },
             },
             {
-              $unwind: { path: "$finished", preserveNullAndEmptyArrays: true },
+              $unwind: {
+                path: "$finished",
+                preserveNullAndEmptyArrays: true,
+              },
             },
             {
               $project: {
@@ -204,9 +208,7 @@ const getLists = async (req, res, next) => {
           as: "otherData",
         },
       },
-      {
-        $unwind: "$otherData",
-      },
+      { $unwind: "$otherData" },
       {
         $project: {
           name: 1,
@@ -221,8 +223,8 @@ const getLists = async (req, res, next) => {
       },
       matchStage,
       { $sort: { order: 1 } },
-      { $skip: page * 10 },
-      { $limit: 10 },
+      { $skip: offset },
+      { $limit: limit },
     ]);
 
     res.status(200).json({ lists });
@@ -231,5 +233,4 @@ const getLists = async (req, res, next) => {
     res.status(500).send("Internal Server Error");
   }
 };
-
 export default { AddList, UpdateList, DeleteList, ChangeOrder, getLists };

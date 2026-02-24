@@ -2,6 +2,13 @@ import taskSchema from "../models/taskSchema.js";
 import listSchema from "../models/listSchema.js";
 import userSchema from "../models/userSchema.js";
 import commentSchema from "../models/commentSchema.js";
+import { sendEmail } from "../utils/send_email.js";
+import {
+  task_status_change_html,
+  task_assignment_html,
+} from "../view/task_status_html.js";
+import mongoose from "mongoose";
+
 const createTask = async (req, res, next) => {
   const { list_id } = req.params;
   const { id } = req.user;
@@ -86,22 +93,27 @@ const updateTask = async (req, res, next) => {
   }
 };
 const taskStatusUpdate = async (req, res, next) => {
-  console.log("jhhhkk;asdga;kl");
   const { task_id } = req.params;
-  const { id } = req.user;
+  const { id, name, email } = req.user;
   if (!task_id) return res.status(400).json({ msg: "select a task to update" });
   try {
     const task = await taskSchema.findById(task_id);
     if (!task) {
       return res.status(400).send("Task not found");
     }
-    console.log(id);
-    console.log(task.owner);
+
     if (id != task.owner && !task.collabrators.includes(id)) {
       return res.status(400).send("Unauthorized");
     }
     task.status = !task.status;
     await task.save();
+    const owner = await userSchema.findById(task.owner);
+    const { subject, html } = task_status_change_html(
+      name,
+      task.name,
+      task.status,
+    );
+    sendEmail(owner.email, subject, html);
     res.status(200).json({ msg: "Task status updated" });
   } catch (err) {
     console.log("Error occurred while updating task status:", err);
@@ -155,10 +167,12 @@ const assignTask = async (req, res, next) => {
     task.collabrators.push(collabrator._id);
     await task.save();
     const assignedTo = {
-      _id: collabrator._id , 
+      _id: collabrator._id,
       name: collabrator.name,
-      email:collabrator.email,
-    }
+      email: collabrator.email,
+    };
+    const { subject, html } = task_assignment_html(collabrator.name, task.name);
+    sendEmail(collabrator.email, subject, html);
     res.status(200).json({ assignedTo });
   } catch (err) {
     console.log("Error occurred while assigning task:", err);
@@ -167,28 +181,35 @@ const assignTask = async (req, res, next) => {
 };
 const getAllTasks = async (req, res, next) => {
   const { list_id } = req.params;
-  const { page } = req.query;
+  let { offset = 0, limit = 10 } = req.query;
+
   if (!list_id)
     return res.status(400).json({ msg: "select a list to get tasks" });
+
   try {
     const list = await listSchema.findById(list_id);
     if (!list) {
       return res.status(400).send("List not found");
     }
+
+    // Convert to numbers and prevent negative values
+    offset = Math.max(parseInt(offset) || 0, 0);
+    limit = Math.max(parseInt(limit) || 10, 1);
+
     const tasks = await taskSchema
       .find({ list: list_id })
-      .skip(page * 10)
-      .limit(10)
+      .skip(offset)
+      .limit(limit)
       .sort({ order: 1 })
       .populate("collabrators", "name email")
       .populate("owner", "name email");
+
     res.status(200).json(tasks);
   } catch (err) {
     console.log("Error occurred while getting tasks:", err);
     res.status(500).send("Internal Server Error");
   }
 };
-import mongoose from "mongoose";
 
 const changeOrder = async (req, res) => {
   const { task_id } = req.params;

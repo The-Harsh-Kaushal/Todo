@@ -24,6 +24,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/board", boardRoutes);
 app.use("/api/list", listRoutes);
 app.use("/api/task", taskRoutes);
+app.use("/api/static", express.static("public"));
 
 try {
   await mongodConnect();

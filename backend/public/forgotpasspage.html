@@ -1,0 +1,175 @@
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #0f0f0f, #1c1c1c);
+    font-family: Arial, Helvetica, sans-serif;
+    color: white;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 25px;
+    background: #ffffff10;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #ffffff20;
+  }
+
+  header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .card {
+    background: #ffffff10;
+    padding: 40px;
+    border-radius: 15px;
+    width: 350px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
+    border: 1px solid #ffffff20;
+  }
+
+  .card h2 {
+    margin-top: 0;
+    text-align: center;
+    margin-bottom: 25px;
+  }
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .input {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 14px;
+    color: #ccc;
+  }
+
+  input {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ffffff30;
+    background: #ffffff10;
+    color: white;
+    outline: none;
+    transition: 0.3s;
+  }
+
+  input:focus {
+    border-color: #00ffae;
+    box-shadow: 0 0 8px #00ffae55;
+  }
+
+  button {
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background: #00ffae;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  button:hover {
+    background: #00cc8a;
+    transform: translateY(-2px);
+  }
+</style>
+
+<body>
+  <header>
+    <div style="height: 50px; width: 50px"></div>
+    <h1>Taskify</h1>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <h2>Reset Your Password</h2>
+
+      <form class="form" id="form">
+        <div class="input">
+          <label for="newPass">New Password</label>
+          <input
+            id="newPass"
+            placeholder="Enter new password"
+            type="password"
+          />
+        </div>
+
+        <div class="input">
+          <label for="confirmNewPass">Confirm Password</label>
+          <input
+            id="confirmNewPass"
+            placeholder="Confirm password"
+            type="password"
+          />
+        </div>
+
+        <button type="submit">Update Password</button>
+      </form>
+    </div>
+  </div>
+</body>
+<script>
+  const newPassinput = document.getElementById("newPass");
+  const confirmPassinput = document.getElementById("confirmNewPass");
+  const form = document.getElementById("form");
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!token) {
+      alert("Invalid or missing reset token");
+      return;
+    }
+    if (newPassinput.value !== confirmPassinput.value) {
+      alert("password do not match!");
+      return;
+    }
+    try {
+      const response = await fetch("/api/user/forgotpass", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          password: newPassinput.value,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error("Request failed");
+      }
+      alert("password updated sucessfully");
+    } catch (err) {
+      alert("some error occured ");
+      console.log(err);
+    }
+  });
+</script>
