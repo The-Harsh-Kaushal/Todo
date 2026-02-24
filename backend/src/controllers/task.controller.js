@@ -304,8 +304,8 @@ const changeOrder = async (req, res) => {
   }
 };
 const getAssignedTasks = async (req, res, next) => {
-  const { id } = req.body;
-  let { offset = 0, limit = 0 } = req.params;
+  const { id } = req.user;
+  let { offset = 0, limit = 10 } = req.query;
   offset = Math.max(parseInt(offset) || 0, 0);
   limit = Math.max(parseInt(limit) || 10, 1);
   const temp_id = new mongoose.Types.ObjectId(id);
@@ -314,6 +314,12 @@ const getAssignedTasks = async (req, res, next) => {
       {
         $match: {
           collabrators: temp_id,
+        },
+      },
+      {
+        $sort: {
+          deadline: 1,
+          _id: 1,
         },
       },
       {
@@ -357,11 +363,14 @@ const getAssignedTasks = async (req, res, next) => {
               },
             },
           ],
-          as: "$ownerDetails",
+          as: "ownerDetails",
         },
       },
       {
-        $unwind: "$ownerDetails",
+        $unwind: {
+          path: "$ownerDetails",
+          preserveNullAndEmptyArrays: true,
+        },
       },
       {
         $project: {
@@ -372,11 +381,12 @@ const getAssignedTasks = async (req, res, next) => {
           status: 1,
           description: 1,
           deadline: 1,
+          order: 1,
           collabrators: "$collabratorsArray",
         },
       },
     ]);
-    res.status(200).json(tasks);
+    res.status(200).json({ tasks });
   } catch (err) {
     console.log(err);
     res.status(400).send("internal server error");

@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import CreateButton from "@/components/CreationButton";
 import ListSearchBar from "@/components/ListSearchBar";
 import ListDisplayer from "@/components/listdisplayer";
+import AssignedListDisplayer from "@/components/AssignedListDisplayer";
 
 import {
   SortableContext,
@@ -15,6 +16,8 @@ export default function ListComponent({
   handleDragEndList,
   onClickList,
   listStopScroll,
+  onClickAssignedList,
+  assignedTasksStats,
 }) {
   const [listsOpen, setListsOpen] = useState(true);
   const [value, setValue] = useState("");
@@ -83,6 +86,11 @@ export default function ListComponent({
             setValue={setValue}
             operator={operator}
             setOperator={setOperator}
+          />
+          <AssignedListDisplayer
+            taskCount={assignedTasksStats?.totalTasks}
+            finishedTasks={assignedTasksStats?.finishedTasks}
+            onClickHandler={onClickAssignedList}
           />
           <DndContext
             collisionDetection={closestCorners}

@@ -47,7 +47,7 @@ const AddList = async (req, res, next) => {
       totalTasks: 0,
       finishedTasks: 0,
     };
-    res.status(200).json({ new_list});
+    res.status(200).json({ new_list });
   } catch (err) {
     console.log("Error occurred while adding list:", err);
     res.status(500).send("Internal Server Error");
@@ -180,10 +180,7 @@ const getLists = async (req, res, next) => {
             {
               $facet: {
                 totalCount: [{ $count: "totalTasks" }],
-                finished: [
-                  { $match: { status: true } },
-                  { $count: "total" },
-                ],
+                finished: [{ $match: { status: true } }, { $count: "total" }],
               },
             },
             {
@@ -233,10 +230,45 @@ const getLists = async (req, res, next) => {
     res.status(500).send("Internal Server Error");
   }
 };
-// const getAssignedList= async(req,res,next)=>{
-//   const {id}=req.user;
-//   try{
-//     const list = 
-//   }
-// }
-export default { AddList, UpdateList, DeleteList, ChangeOrder, getLists };
+const getAssignedList = async (req, res, next) => {
+  const { id } = req.user;
+  const temp_id = new mongoose.Types.ObjectId(id);
+
+  try {
+    const list = await taskSchema.aggregate([
+      {
+        $match: {
+          collabrators: temp_id,
+        },
+      },
+      {
+        $facet: {
+          total: [
+            { $count: "totalTasks" }
+          ],
+          completed: [
+            { $match: { status: true } },
+            { $count: "completedTasks" }
+          ],
+        },
+      },
+      {
+        $project: {
+          totalTasks: {
+            $ifNull: [{ $arrayElemAt: ["$total.totalTasks", 0] }, 0],
+          },
+          finishedTasks: {
+            $ifNull: [{ $arrayElemAt: ["$completed.completedTasks", 0] }, 0],
+          },
+        },
+      },
+    ]);
+
+    res.status(200).json(list[0]);
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("internal server error");
+  }
+};
+export default { AddList, UpdateList, DeleteList, ChangeOrder, getLists, getAssignedList };

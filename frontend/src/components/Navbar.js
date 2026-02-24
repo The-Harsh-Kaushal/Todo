@@ -15,7 +15,7 @@ export default function Navbar() {
         {},
         {
           headers: {
-            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
           },
         },
       );

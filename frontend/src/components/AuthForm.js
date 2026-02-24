@@ -36,7 +36,7 @@ export default function AuthForm({ mode, authHandler }) {
         },
         {
           headers: {
-            Authorization: `${localStorage.getItem("accesstoken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
           },
         },
       );

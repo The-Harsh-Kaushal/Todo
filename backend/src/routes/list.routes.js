@@ -33,4 +33,10 @@ Router.get(
   listControllers.getLists,
   async (req, res) => {},
 );
+Router.get(
+  "/assignedlist",
+  verifySession,
+  listControllers.getAssignedList,
+  (req, res) => {},
+);
 export default Router;

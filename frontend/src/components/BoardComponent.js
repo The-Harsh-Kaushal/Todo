@@ -18,7 +18,7 @@ export default function BoardComponent({ boards, setBoards, onClickBoard }) {
         },
         {
           headers: {
-            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
           },
         },
       );
@@ -48,7 +48,7 @@ export default function BoardComponent({ boards, setBoards, onClickBoard }) {
         `${process.env.NEXT_PUBLIC_BASE_URL}/board/boards`,
         {
           headers: {
-            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
           },
           params: {
             startswith: word,

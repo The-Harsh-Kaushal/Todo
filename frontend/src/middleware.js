@@ -11,5 +11,5 @@ export function middleware(request) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"], // protect these routes
+  matcher: ["/dashboard/:path*", "/profile/:path*"], // protect these routes
 };

@@ -14,9 +14,25 @@ export default function dashboard() {
   const [boards, setBoards] = useState([]);
   const [lists, setLists] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [assignedTasksStats, setAssignedTasksStats] = useState({
+    totalTasks: 0,
+    finishedTasks: 0,
+  });
+  const assignedTasksActive = useRef(false);
   const listScrollStop = useRef(null);
   const taskScrollStop = useRef(null);
   const taskRef = useRef(null);
+  async function fetchAssignedTasksStats() {
+    const response = await axios.get(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/list/assignedlist`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
+        },
+      },
+    );
+    setAssignedTasksStats(response.data);
+  }
 
   async function ListCreation(payload) {
     try {
@@ -27,7 +43,7 @@ export default function dashboard() {
         },
         {
           headers: {
-            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
           },
         },
       );
@@ -37,6 +53,7 @@ export default function dashboard() {
     }
   }
   async function TaskCreation(payload) {
+    if (!activeList || activeList === "assigned") return;
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/task/addtask/${activeList}`,
@@ -47,7 +64,7 @@ export default function dashboard() {
         },
         {
           headers: {
-            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
           },
         },
       );
@@ -63,7 +80,7 @@ export default function dashboard() {
         `${process.env.NEXT_PUBLIC_BASE_URL}/list/getlists/${id}`,
         {
           headers: {
-            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
           },
         },
       );
@@ -74,12 +91,13 @@ export default function dashboard() {
     }
   }
   async function onClickList(id, offset, limit) {
+    assignedTasksActive.current = false;
     try {
       const tasks = await axios.get(
         `${process.env.NEXT_PUBLIC_BASE_URL}/task/gettasks/${id}`,
         {
           headers: {
-            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
           },
           params: {
             offset,
@@ -106,6 +124,40 @@ export default function dashboard() {
       console.log(error);
     }
   }
+  async function onClickAssignedList(offset = 0) {
+    assignedTasksActive.current = true;
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/task/getassignedtasks`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
+          },
+          params: {
+            offset,
+            limit: process.env.NEXT_PUBLIC_LIMIT,
+          },
+        },
+      );
+      const assignedTasks = response.data.tasks || [];
+
+      setActiveList("assigned");
+      taskScrollStop.current = {
+        lastPayload: assignedTasks.length,
+      };
+      if (offset > 0) {
+        setTasks((prev) => {
+          const existingTasks = new Set(prev.map((b) => b._id));
+          const filteredTasks = assignedTasks.filter(
+            (b) => !existingTasks.has(b._id),
+          );
+          return [...prev, ...filteredTasks];
+        });
+      } else setTasks(assignedTasks);
+    } catch (error) {
+      console.log(error);
+    }
+  }
   async function onUpdate(id, payload) {
     try {
       const response = await axios.patch(
@@ -118,11 +170,12 @@ export default function dashboard() {
         },
         {
           headers: {
-            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
           },
         },
       );
-      onClickList(activeList);
+      if (activeList === "assigned") onClickAssignedList(0);
+      else onClickList(activeList);
     } catch (error) {}
   }
   async function updateStatus(id) {
@@ -132,7 +185,7 @@ export default function dashboard() {
         {},
         {
           headers: {
-            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
           },
         },
       );
@@ -141,6 +194,7 @@ export default function dashboard() {
           task._id === id ? { ...task, status: !task.status } : task,
         ),
       );
+      await fetchAssignedTasksStats();
     } catch (err) {
       console.error("Failed to update task status:", err);
     }
@@ -154,7 +208,7 @@ export default function dashboard() {
         },
         {
           headers: {
-            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
           },
         },
       );
@@ -168,6 +222,7 @@ export default function dashboard() {
             : item;
         });
       });
+      await fetchAssignedTasksStats();
     } catch (error) {
       console.log(error);
     }
@@ -200,7 +255,7 @@ export default function dashboard() {
         },
         {
           headers: {
-            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
           },
         },
       );
@@ -210,6 +265,7 @@ export default function dashboard() {
     } catch (error) {}
   }
   async function handleDragEndTask({ active, over }) {
+    if (activeList === "assigned" || !over) return;
     if (active.id == over.id) return;
     const newPos = getTaskPos(over.id, "tasks");
     const oriPos = getTaskPos(active.id, "tasks");
@@ -221,7 +277,7 @@ export default function dashboard() {
         },
         {
           headers: {
-            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
           },
         },
       );
@@ -237,7 +293,7 @@ export default function dashboard() {
         `${process.env.NEXT_PUBLIC_BASE_URL}/list/getlists/${activeBoard}`,
         {
           headers: {
-            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
           },
           params: {
             operator,
@@ -272,18 +328,21 @@ export default function dashboard() {
     if (current_pos >= taskRef.current.scrollHeight - 1) {
       const offset = tasks.length;
       const limit = Number(process.env.NEXT_PUBLIC_LIMIT);
-      if (!taskScrollStop || taskScrollStop.lastPayload > 0)
-        onClickList(activeBoard, offset, limit);
+      if (!taskScrollStop.current || taskScrollStop.current.lastPayload > 0) {
+        if (assignedTasksActive.current) onClickAssignedList(tasks.length);
+        else onClickList(activeList, offset, limit);
+      }
     }
   }
   useEffect(() => {
     async function onLoad() {
       try {
+        await fetchAssignedTasksStats();
         const response = await axios.get(
           `${process.env.NEXT_PUBLIC_BASE_URL}/user/profile`,
           {
             headers: {
-              Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+              Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
             },
           },
         );
@@ -293,7 +352,7 @@ export default function dashboard() {
           `${process.env.NEXT_PUBLIC_BASE_URL}/board/boards`,
           {
             headers: {
-              Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+              Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
             },
           },
         );
@@ -321,6 +380,8 @@ export default function dashboard() {
         handleDragEndList={handleDragEndList}
         onClickList={onClickList}
         listStopScroll={listScrollStop}
+        onClickAssignedList={onClickAssignedList}
+        assignedTasksStats={assignedTasksStats}
       />
       {/* tasks */}
       <TaskComponent

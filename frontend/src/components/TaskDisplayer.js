@@ -81,7 +81,7 @@ export default function TaskDisplayer({
           `${process.env.NEXT_PUBLIC_BASE_URL}/user/profiles`,
           {
             headers: {
-              Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+              Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
             },
             params: { word: value },
           },

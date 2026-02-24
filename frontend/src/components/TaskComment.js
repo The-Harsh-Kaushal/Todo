@@ -25,7 +25,7 @@ export default function TaskComments({ taskId }) {
         `${process.env.NEXT_PUBLIC_BASE_URL}/task/getcomments/${taskId}`,
         {
           headers: {
-            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
           },
           params: {
             offset: comments ? comments.length : 0,
@@ -65,7 +65,7 @@ export default function TaskComments({ taskId }) {
         { comment: newComment },
         {
           headers: {
-            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
           },
         },
       );
@@ -87,7 +87,7 @@ export default function TaskComments({ taskId }) {
         `${process.env.NEXT_PUBLIC_BASE_URL}/task/deletecomment/${taskId}/${commentId}`,
         {
           headers: {
-            Authorization: `BEARER ${localStorage.getItem("accesstoken")}`,
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
           },
         },
       );

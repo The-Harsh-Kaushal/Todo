@@ -16,7 +16,7 @@ Router.get(
   userControllers.getProfiles,
   (req, res) => {},
 );
-Router.post("/logut", verifySession, userControllers.logout, (req, res) => {});
+Router.post("/logout", verifySession, userControllers.logout, (req, res) => {});
 Router.post(
   "/resetpassword",
   verifySession,
@@ -28,6 +28,5 @@ Router.post(
   userControllers.forgotpassreq,
   (req, res) => {},
 );
-Router.post("/forgotpass",userControllers.forgotPass,(req,res)=>{
-})
+Router.post("/forgotpass", userControllers.forgotPass, (req, res) => {});
 export default Router;
