@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { sendEmail } from "../utils/send_email.js";
 import { forgot_pass_html } from "../view/forgot_pass_html.js";
+import util from "util";
+const verifyAsync = util.promisify(jwt.verify);
 const logout = async (req, res, next) => {
   const { id } = req.user;
   const token = req.cookies.refresh_token;
@@ -70,7 +72,7 @@ const forgotpassreq = async (req, res, next) => {
   if (!email) return res.status(400).send("send the email ");
   try {
     const user = await userSchema.findOne({ email });
-    if (!user) return res.staus(400).send("no such user exsist");
+    if (!user) return res.status(400).send("no such user exsist");
     const token = jwt.sign(
       { id: user._id, name: user.name, email: user.email },
       JWT_SECRET,
@@ -89,18 +91,28 @@ const forgotpassreq = async (req, res, next) => {
 };
 const forgotPass = async (req, res, next) => {
   const { token, password } = req.body;
+
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
-    const { iat, exp, ...rest } = payload;
-    const user = await userSchema.findById(rest.id);
-    if (!user) return rest.status(400).send("No such user exsist");
-    const hashed_new_pass = await bcrypt.hash(password, SALT_ROUNDS);
-    user.password = hashed_new_pass;
+    if (!password) {
+      return res.status(400).send("Password is required");
+    }
+
+    const payload = await verifyAsync(token, JWT_SECRET);
+
+    const user = await userSchema.findById(payload.id);
+    if (!user) {
+      return res.status(400).send("No such user exists");
+    }
+
+    const hashedNewPass = await bcrypt.hash(password, SALT_ROUNDS);
+
+    user.password = hashedNewPass;
     await user.save();
-    return res.status(200).send("password sucessfully changed");
+
+    return res.status(200).send("Password successfully changed");
+
   } catch (err) {
-    console.log(err);
-    return res.staus(400).send("token expired");
+    return res.status(400).send("Token expired or invalid");
   }
 };
 export default { logout, getProfiles, resetpass, forgotpassreq, forgotPass };

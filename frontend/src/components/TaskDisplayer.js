@@ -2,6 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import axios from "axios";
 import React, { useRef, useState } from "react";
+import TaskComments from "./TaskComment";
 
 function truncate(text, length = 40) {
   if (!text) return "";
@@ -272,6 +273,10 @@ export default function TaskDisplayer({
                     )}
                   </form>
                 </div>
+                {/* commenet Section */}
+                <div>
+                  <TaskComments taskId={id} />
+                </div>
               </>
             ) : (
               <>
@@ -337,9 +342,7 @@ export default function TaskDisplayer({
               </>
             )}
           </div>
-             
         </div>
-        
       )}
     </div>
   );

@@ -233,4 +233,10 @@ const getLists = async (req, res, next) => {
     res.status(500).send("Internal Server Error");
   }
 };
+// const getAssignedList= async(req,res,next)=>{
+//   const {id}=req.user;
+//   try{
+//     const list = 
+//   }
+// }
 export default { AddList, UpdateList, DeleteList, ChangeOrder, getLists };

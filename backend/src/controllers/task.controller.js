@@ -203,7 +203,6 @@ const getAllTasks = async (req, res, next) => {
       .sort({ order: 1 })
       .populate("collabrators", "name email")
       .populate("owner", "name email");
-
     res.status(200).json(tasks);
   } catch (err) {
     console.log("Error occurred while getting tasks:", err);
@@ -304,7 +303,85 @@ const changeOrder = async (req, res) => {
     res.status(500).send("Internal server error");
   }
 };
-
+const getAssignedTasks = async (req, res, next) => {
+  const { id } = req.body;
+  let { offset = 0, limit = 0 } = req.params;
+  offset = Math.max(parseInt(offset) || 0, 0);
+  limit = Math.max(parseInt(limit) || 10, 1);
+  const temp_id = new mongoose.Types.ObjectId(id);
+  try {
+    const tasks = await taskSchema.aggregate([
+      {
+        $match: {
+          collabrators: temp_id,
+        },
+      },
+      {
+        $skip: offset,
+      },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: "users",
+          let: { cArray: "$collabrators" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $in: ["$_id", "$$cArray"] },
+              },
+            },
+            {
+              $project: {
+                name: 1,
+                email: 1,
+              },
+            },
+          ],
+          as: "collabratorsArray",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          let: { towner: "$owner" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$_id", "$$towner"] },
+              },
+            },
+            {
+              $project: {
+                name: 1,
+                email: 1,
+              },
+            },
+          ],
+          as: "$ownerDetails",
+        },
+      },
+      {
+        $unwind: "$ownerDetails",
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          list: 1,
+          owner: "$ownerDetails",
+          status: 1,
+          description: 1,
+          deadline: 1,
+          collabrators: "$collabratorsArray",
+        },
+      },
+    ]);
+    res.status(200).json(tasks);
+  } catch (err) {
+    console.log(err);
+    res.status(400).send("internal server error");
+  }
+};
 export default {
   createTask,
   taskDetails,
@@ -314,4 +391,5 @@ export default {
   assignTask,
   getAllTasks,
   changeOrder,
+  getAssignedTasks,
 };

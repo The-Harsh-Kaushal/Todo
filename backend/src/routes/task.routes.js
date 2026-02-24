@@ -69,5 +69,11 @@ Router.delete(
   commentsControllers.deleteComment,
   async (req, res) => {},
 );
+Router.get(
+  "/getassignedtasks",
+  verifySession,
+  taskControllers.getAssignedTasks,
+  (req, res) => {},
+);
 
 export default Router;

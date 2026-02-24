@@ -32,7 +32,7 @@ export default function AuthForm({ mode, authHandler }) {
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/user/forgetpassreq`,
         {
-          email: formData.email
+          email: formData.email,
         },
         {
           headers: {
@@ -41,14 +41,15 @@ export default function AuthForm({ mode, authHandler }) {
         },
       );
 
-      const data = await res.json();
+      
 
-      if (res.ok) {
+      if (res.status == 200 || res.status == 204) {
         setMessage("Password reset link sent to your email.");
       } else {
-        setMessage(data.message || "Something went wrong.");
+        setMessage(res.text || "Something went wrong.");
       }
     } catch (error) {
+      console.log(error);
       setMessage("Server error. Please try again.");
     }
   }
