@@ -63,6 +63,7 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    position: relative;
   }
 
   label {
@@ -72,6 +73,7 @@
 
   input {
     padding: 10px;
+    padding-right: 62px;
     border-radius: 8px;
     border: 1px solid #ffffff30;
     background: #ffffff10;
@@ -99,6 +101,25 @@
     background: #00cc8a;
     transform: translateY(-2px);
   }
+
+  .toggle-pass {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    border: none;
+    background: transparent;
+    color: #9dd9ff;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0;
+    font-weight: 600;
+  }
+
+  .toggle-pass:hover {
+    background: transparent;
+    transform: none;
+    color: #c7e9ff;
+  }
 </style>
 
 <body>
@@ -119,6 +140,13 @@
             placeholder="Enter new password"
             type="password"
           />
+          <button
+            type="button"
+            id="toggleNewPass"
+            class="toggle-pass"
+          >
+            Show
+          </button>
         </div>
 
         <div class="input">
@@ -128,6 +156,13 @@
             placeholder="Confirm password"
             type="password"
           />
+          <button
+            type="button"
+            id="toggleConfirmPass"
+            class="toggle-pass"
+          >
+            Show
+          </button>
         </div>
 
         <button type="submit">Update Password</button>
@@ -138,9 +173,22 @@
 <script>
   const newPassinput = document.getElementById("newPass");
   const confirmPassinput = document.getElementById("confirmNewPass");
+  const toggleNewPass = document.getElementById("toggleNewPass");
+  const toggleConfirmPass = document.getElementById("toggleConfirmPass");
   const form = document.getElementById("form");
   const params = new URLSearchParams(window.location.search);
   const token = params.get("token");
+
+  function bindPasswordToggle(input, button) {
+    button.addEventListener("click", () => {
+      const isHidden = input.type === "password";
+      input.type = isHidden ? "text" : "password";
+      button.textContent = isHidden ? "Hide" : "Show";
+    });
+  }
+
+  bindPasswordToggle(newPassinput, toggleNewPass);
+  bindPasswordToggle(confirmPassinput, toggleConfirmPass);
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();

@@ -21,15 +21,12 @@ export default function TaskComponent({
  
   return (
     <div
-      className={`${
-        TasksOpen ? "flex-1" : "w-16"
-      } border-r border-gray-800 flex flex-col transition-all duration-300`}
+      className={`${TasksOpen ? "flex-1" : "w-16"} border-r border-gray-800 flex flex-col transition-all duration-300`}
     >
       {/* Header */}
       <div
         onClick={() => setTasksOpen(!TasksOpen)}
-        className={`border-b border-gray-800 bg-gray-950 cursor-pointer
-         ${TasksOpen ? "px-4 py-4" : "flex-1 flex items-center justify-center"}`}
+        className={`border-b border-gray-800 bg-gray-950 cursor-pointer ${TasksOpen ? "px-4 py-4" : "flex-1 flex items-center justify-center"}`}
       >
         {TasksOpen ? (
           <div className="flex justify-between">

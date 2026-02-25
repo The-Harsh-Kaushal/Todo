@@ -6,7 +6,7 @@ import userSchema from "../models/userSchema.js";
 export const verifySession = async (req, res, next) => {
   const token = req.headers["authorization"]?.split(" ")[1];
   if (!token) {
-    return res.status(401).send("Unauthorized");
+    return res.status(401).json({ msg: "Unauthorized" });
   }
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
@@ -15,13 +15,13 @@ export const verifySession = async (req, res, next) => {
     next();
   } catch (error) {
     console.log("Error occurred while verifying session:", error);
-    res.status(403).send("Forbidden");
+    res.status(403).json({ msg: "Forbidden" });
   }
 };
 export const refreshSession = async (req, res, next) => {
   const token = req.cookies.refresh_token;
   if (!token) {
-    return res.status(401).send("Unauthorized");
+    return res.status(401).json({ msg: "Unauthorized" });
   }
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
@@ -35,6 +35,6 @@ export const refreshSession = async (req, res, next) => {
     res.status(200).json({ msg: "refresh successful", access: access_token });
   } catch (error) {
     console.log("Error occurred while verifying session:", error);
-    res.status(403).send("Forbidden");
+    res.status(403).json({ msg: "Forbidden" });
   }
 };

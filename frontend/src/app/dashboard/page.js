@@ -7,8 +7,10 @@ import { arrayMove } from "@dnd-kit/sortable";
 import BoardComponent from "@/components/BoardComponent";
 import ListComponent from "@/components/ListComponent";
 import TaskComponent from "@/components/TaskComponent";
+import { useErrorPopup } from "@/components/ErrorPopupProvider";
 
 export default function dashboard() {
+  const { showApiError } = useErrorPopup();
   const [activeBoard, setActiveBoard] = useState();
   const [activeList, setActiveList] = useState();
   const [boards, setBoards] = useState([]);
@@ -49,7 +51,7 @@ export default function dashboard() {
       );
       setLists((prev) => [response.data.new_list, ...prev]);
     } catch (error) {
-      console.log(error);
+      showApiError(error, "Failed to create list.");
     }
   }
   async function TaskCreation(payload) {
@@ -70,7 +72,7 @@ export default function dashboard() {
       );
       onClickList(activeList);
     } catch (error) {
-      console.log(error);
+      showApiError(error, "Failed to create task.");
     }
   }
 
@@ -87,7 +89,7 @@ export default function dashboard() {
       setActiveBoard(id);
       setLists(lists.data.lists);
     } catch (error) {
-      console.log(error);
+      showApiError(error, "Failed to load lists.");
     }
   }
   async function onClickList(id, offset, limit) {
@@ -121,7 +123,7 @@ export default function dashboard() {
         setTasks(tasks.data);
       }
     } catch (error) {
-      console.log(error);
+      showApiError(error, "Failed to load tasks.");
     }
   }
   async function onClickAssignedList(offset = 0) {
@@ -155,7 +157,7 @@ export default function dashboard() {
         });
       } else setTasks(assignedTasks);
     } catch (error) {
-      console.log(error);
+      showApiError(error, "Failed to load assigned tasks.");
     }
   }
   async function onUpdate(id, payload) {
@@ -176,7 +178,9 @@ export default function dashboard() {
       );
       if (activeList === "assigned") onClickAssignedList(0);
       else onClickList(activeList);
-    } catch (error) {}
+    } catch (error) {
+      showApiError(error, "Failed to update task.");
+    }
   }
   async function updateStatus(id) {
     try {
@@ -189,14 +193,27 @@ export default function dashboard() {
           },
         },
       );
+      let temp_add;
       setTasks((prev) =>
-        prev.map((task) =>
-          task._id === id ? { ...task, status: !task.status } : task,
-        ),
+        prev.map((task) => {
+          if (task._id === id) {
+            temp_add = task.status ? -1 : 1;
+            return { ...task, status: !task.status };
+          } else {
+            return task;
+          }
+        }),
       );
+      setLists((prev) => {
+        return prev.map((item) => {
+         return  item._id == activeList
+            ? { ...item, finishedTasks: item.finishedTasks + temp_add }
+            : item;
+        });
+      });
       await fetchAssignedTasksStats();
     } catch (err) {
-      console.error("Failed to update task status:", err);
+      showApiError(err, "Failed to update task status.");
     }
   }
   async function onAssignCollaborator(id, newCollaborator) {
@@ -224,7 +241,7 @@ export default function dashboard() {
       });
       await fetchAssignedTasksStats();
     } catch (error) {
-      console.log(error);
+      showApiError(error, "Failed to assign collaborator.");
     }
   }
   function getTaskPos(id, mode) {
@@ -262,7 +279,9 @@ export default function dashboard() {
       setLists((prev) => {
         return arrayMove(prev, origPos, newPos);
       });
-    } catch (error) {}
+    } catch (error) {
+      showApiError(error, "Failed to change list order.");
+    }
   }
   async function handleDragEndTask({ active, over }) {
     if (activeList === "assigned" || !over) return;
@@ -284,7 +303,9 @@ export default function dashboard() {
       setTasks((prev) => {
         return arrayMove(prev, oriPos, newPos);
       });
-    } catch (error) {}
+    } catch (error) {
+      showApiError(error, "Failed to change task order.");
+    }
   }
 
   async function handlelistSearch({ operator, value, offset, limit }) {
@@ -318,7 +339,7 @@ export default function dashboard() {
         });
       } else setLists(lists.data.lists);
     } catch (error) {
-      console.log(error);
+      showApiError(error, "Failed to search lists.");
     }
   }
   async function handleTaskScroll() {
@@ -358,7 +379,7 @@ export default function dashboard() {
         );
         setBoards(boards.data.boards);
       } catch (error) {
-        console.log(error);
+        showApiError(error, "Failed to load dashboard.");
       }
     }
     onLoad();

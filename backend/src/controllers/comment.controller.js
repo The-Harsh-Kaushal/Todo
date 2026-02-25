@@ -10,7 +10,7 @@ const addComment = async (req, res, next) => {
   try {
     const task = await taskSchema.findById(task_id);
     if (!task) {
-      return res.status(400).send("Task not found");
+      return res.status(400).json({ msg: "Task not found" });
     }
     const newComment = new commentSchema({
       text: comment,
@@ -32,7 +32,7 @@ const addComment = async (req, res, next) => {
     res.status(200).json(temp);
   } catch (err) {
     console.log("Error occurred while adding comment:", err);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 const deleteComment = async (req, res, next) => {
@@ -43,11 +43,11 @@ const deleteComment = async (req, res, next) => {
   try {
     const task = await taskSchema.findById(task_id);
     if (!task) {
-      return res.status(400).send("Task not found");
+      return res.status(400).json({ msg: "Task not found" });
     }
     const comment = await commentSchema.findById(comment_id);
     if (!comment) {
-      return res.status(400).send("Comment not found");
+      return res.status(400).json({ msg: "Comment not found" });
     }
     if (id !== comment.owner.toString() && id !== task.owner.toString())
       return res.status(400).json({ msg: "You can delete only your comments" });
@@ -55,7 +55,7 @@ const deleteComment = async (req, res, next) => {
     res.status(200).json({ msg: "Comment deleted" });
   } catch (err) {
     console.log("Error occurred while deleting comment:", err);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 

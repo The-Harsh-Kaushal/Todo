@@ -8,16 +8,16 @@ import { welcome_email_html } from "../view/welcome_email_html.js";
 const loginMiddleware = async (req, res, next) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    return res.status(400).send("Identifier and password are required");
+    return res.status(400).json({ msg: "Identifier and password are required" });
   }
   try {
     const user = await userSchema.findOne({ email }).select("-refresh_token");
     if (!user) {
-      return res.status(400).send("User not found");
+      return res.status(400).json({ msg: "User not found" });
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).send("Invalid credentials");
+      return res.status(400).json({ msg: "Invalid credentials" });
     }
     const payload = { email: user.email, name: user.name, id: user._id };
     const refresh_token = jwt.sign(payload, JWT_SECRET, { expiresIn: RT_LIFE });
@@ -29,18 +29,18 @@ const loginMiddleware = async (req, res, next) => {
     res.status(200).json({ msg: "Login successful", access: access_token });
   } catch (error) {
     console.log("Error occurred during login:", error);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 const signupMiddleware = async (req, res, next) => {
   const { email, password, name } = req.body;
   if (!email || !password || !name) {
-    return res.status(400).send("All fields are required");
+    return res.status(400).json({ msg: "All fields are required" });
   }
   try {
     const conflict = await userSchema.findOne({ email });
     if (conflict) {
-      return res.status(400).send("User already exists");
+      return res.status(400).json({ msg: "User already exists" });
     }
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const newUser = new userSchema({ email, password: hashedPassword, name });
@@ -58,7 +58,7 @@ const signupMiddleware = async (req, res, next) => {
     next();
   } catch (error) {
     console.log("Error occurred during signup:", error);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 

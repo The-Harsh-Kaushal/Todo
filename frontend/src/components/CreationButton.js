@@ -43,12 +43,7 @@ export default function CreateButton({ type = "task", onCreate  }) {
           e.stopPropagation();
           setOpen(true);
         }}
-        className="px-4 py-2
-                   bg-zinc-900
-                   border border-zinc-800
-                   text-sm text-white
-                   hover:bg-zinc-800 hover:border-zinc-600
-                   transition rounded-sm"
+        className="px-4 py-2 bg-zinc-900 border border-zinc-800 text-sm text-white hover:bg-zinc-800 hover:border-zinc-600 transition rounded-sm"
       >
         + Create {type}
       </button>
@@ -65,12 +60,7 @@ export default function CreateButton({ type = "task", onCreate  }) {
           {/* Modal Content */}
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-md
-                       bg-zinc-950
-                       border border-zinc-800
-                       rounded-md
-                       p-6 space-y-4
-                       shadow-lg"
+            className="relative w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-md p-6 space-y-4 shadow-lg"
           >
             <h2 className="text-lg font-semibold text-white capitalize">
               Create {type}
@@ -82,9 +72,7 @@ export default function CreateButton({ type = "task", onCreate  }) {
               <input
                 value={formData.name}
                 onChange={(e) => handleChange("name", e.target.value)}
-                className="w-full mt-1 bg-zinc-900 border border-zinc-800
-                           px-3 py-2 text-white outline-none
-                           focus:border-zinc-600"
+                className="w-full mt-1 bg-zinc-900 border border-zinc-800 px-3 py-2 text-white outline-none focus:border-zinc-600"
               />
             </div>
 
@@ -99,9 +87,7 @@ export default function CreateButton({ type = "task", onCreate  }) {
                     onChange={(e) =>
                       handleChange("description", e.target.value)
                     }
-                    className="w-full mt-1 bg-zinc-900 border border-zinc-800
-                               px-3 py-2 text-white outline-none
-                               focus:border-zinc-600 resize-none"
+                    className="w-full mt-1 bg-zinc-900 border border-zinc-800 px-3 py-2 text-white outline-none focus:border-zinc-600 resize-none"
                   />
                 </div>
 
@@ -111,9 +97,7 @@ export default function CreateButton({ type = "task", onCreate  }) {
                     type="date"
                     value={formData.deadline}
                     onChange={(e) => handleChange("deadline", e.target.value)}
-                    className="w-full mt-1 bg-zinc-900 border border-zinc-800
-                               px-3 py-2 text-white outline-none
-                               focus:border-zinc-600"
+                    className="w-full mt-1 bg-zinc-900 border border-zinc-800 px-3 py-2 text-white outline-none focus:border-zinc-600"
                   />
                 </div>
               </>
@@ -123,18 +107,14 @@ export default function CreateButton({ type = "task", onCreate  }) {
             <div className="flex justify-end gap-3 pt-3">
               <button
                 onClick={() => setOpen(false)}
-                className="px-3 py-1.5 text-sm
-                           text-zinc-400 hover:text-white transition"
+                className="px-3 py-1.5 text-sm text-zinc-400 hover:text-white transition"
               >
                 Cancel
               </button>
 
               <button
                 onClick={handleSubmit}
-                className="px-4 py-1.5 text-sm
-                           bg-zinc-800 hover:bg-zinc-700
-                           border border-zinc-700
-                           text-white transition"
+                className="px-4 py-1.5 text-sm bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white transition"
               >
                 Create
               </button>

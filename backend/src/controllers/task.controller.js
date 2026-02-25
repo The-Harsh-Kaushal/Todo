@@ -21,10 +21,10 @@ const createTask = async (req, res, next) => {
   try {
     const list = await listSchema.findById(list_id);
     if (!list) {
-      return res.status(400).send("List not found");
+      return res.status(400).json({ msg: "List not found" });
     }
     if (list.owner.toString() !== id)
-      return res.status(400).send("Unauthorized");
+      return res.status(400).json({ msg: "Unauthorized" });
     const lastTask = await taskSchema
       .findOne({ list: list_id })
       .sort({ order: -1 });
@@ -42,7 +42,7 @@ const createTask = async (req, res, next) => {
     res.status(200).json({ msg: "Task added" });
   } catch (err) {
     console.log("Error occurred while adding task:", err);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 const taskDetails = async (req, res, next) => {
@@ -58,12 +58,12 @@ const taskDetails = async (req, res, next) => {
       .populate("collabrators", "name email")
       .populate("owner", "name email");
     if (!task) {
-      return res.status(400).send("Task not found");
+      return res.status(400).json({ msg: "Task not found" });
     }
     res.status(200).json(task);
   } catch (err) {
     console.log("Error occurred while getting task details:", err);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 const updateTask = async (req, res, next) => {
@@ -77,10 +77,10 @@ const updateTask = async (req, res, next) => {
   try {
     const task = await taskSchema.findById(task_id);
     if (!task) {
-      return res.status(400).send("Task not found");
+      return res.status(400).json({ msg: "Task not found" });
     }
     if (task.owner.toString() !== req.user.id) {
-      return res.status(400).send("Unauthorized");
+      return res.status(400).json({ msg: "Unauthorized" });
     }
     if (task_name) task.name = task_name;
     if (task_description) task.description = task_description;
@@ -99,11 +99,11 @@ const taskStatusUpdate = async (req, res, next) => {
   try {
     const task = await taskSchema.findById(task_id);
     if (!task) {
-      return res.status(400).send("Task not found");
+      return res.status(400).json({ msg: "Task not found" });
     }
 
     if (id != task.owner && !task.collabrators.includes(id)) {
-      return res.status(400).send("Unauthorized");
+      return res.status(400).json({ msg: "Unauthorized" });
     }
     task.status = !task.status;
     await task.save();
@@ -117,7 +117,7 @@ const taskStatusUpdate = async (req, res, next) => {
     res.status(200).json({ msg: "Task status updated" });
   } catch (err) {
     console.log("Error occurred while updating task status:", err);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 const deleteTask = async (req, res, next) => {
@@ -127,10 +127,10 @@ const deleteTask = async (req, res, next) => {
   try {
     const task = await taskSchema.findById(task_id);
     if (!task) {
-      return res.status(400).send("Task not found");
+      return res.status(400).json({ msg: "Task not found" });
     }
     if (task.owner.toString() !== id)
-      return res.status(400).send("unauthorized");
+      return res.status(400).json({ msg: "unauthorized" });
 
     await commentSchema.deleteMany({ task: task._id });
     await taskSchema.deleteOne({ _id: task_id });
@@ -141,7 +141,7 @@ const deleteTask = async (req, res, next) => {
     res.status(200).json({ msg: "Task deleted" });
   } catch (err) {
     console.log("Error occurred while deleting task:", err);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 const assignTask = async (req, res, next) => {
@@ -152,14 +152,14 @@ const assignTask = async (req, res, next) => {
   try {
     const task = await taskSchema.findById(task_id);
     if (!task) {
-      return res.status(400).send("Task not found");
+      return res.status(400).json({ msg: "Task not found" });
     }
     if (task.owner.toString() !== id) {
-      return res.status(400).send("Unauthorized");
+      return res.status(400).json({ msg: "Unauthorized" });
     }
     const collabrator = await userSchema.findOne({ email });
     if (!collabrator) {
-      return res.status(400).send("Collabrator not found");
+      return res.status(400).json({ msg: "Collabrator not found" });
     }
     if (task.collabrators.includes(collabrator._id)) {
       return res.status(400).json({ msg: "Task already assigned" });
@@ -176,7 +176,7 @@ const assignTask = async (req, res, next) => {
     res.status(200).json({ assignedTo });
   } catch (err) {
     console.log("Error occurred while assigning task:", err);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 const getAllTasks = async (req, res, next) => {
@@ -189,7 +189,7 @@ const getAllTasks = async (req, res, next) => {
   try {
     const list = await listSchema.findById(list_id);
     if (!list) {
-      return res.status(400).send("List not found");
+      return res.status(400).json({ msg: "List not found" });
     }
 
     // Convert to numbers and prevent negative values
@@ -206,7 +206,7 @@ const getAllTasks = async (req, res, next) => {
     res.status(200).json(tasks);
   } catch (err) {
     console.log("Error occurred while getting tasks:", err);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 
@@ -215,7 +215,7 @@ const changeOrder = async (req, res) => {
   const { new_order } = req.body;
   const { id } = req.user;
 
-  if (!task_id) return res.status(400).send("Choose a task to change order");
+  if (!task_id) return res.status(400).json({ msg: "Choose a task to change order" });
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -225,19 +225,19 @@ const changeOrder = async (req, res) => {
 
     if (!task) {
       await session.abortTransaction();
-      return res.status(400).send("No such task exists");
+      return res.status(400).json({ msg: "No such task exists" });
     }
 
     if (id != task.owner && !task.collaborators.includes(id)) {
       await session.abortTransaction();
-      return res.status(400).send("Unauthorized");
+      return res.status(400).json({ msg: "Unauthorized" });
     }
 
     const old_order = task.order;
 
     if (new_order === old_order) {
       await session.abortTransaction();
-      return res.status(200).send("No change needed");
+      return res.status(200).json({ msg: "No change needed" });
     }
 
     const max_tasks = await taskSchema
@@ -246,7 +246,7 @@ const changeOrder = async (req, res) => {
 
     if (new_order < 1 || new_order > max_tasks) {
       await session.abortTransaction();
-      return res.status(400).send("Choose a valid order");
+      return res.status(400).json({ msg: "Choose a valid order" });
     }
 
     if (new_order < old_order) {
@@ -294,13 +294,13 @@ const changeOrder = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    res.status(200).send("Order updated");
+    res.status(200).json({ msg: "Order updated" });
   } catch (err) {
     await session.abortTransaction();
     session.endSession();
 
     console.log("Error while changing task order:", err);
-    res.status(500).send("Internal server error");
+    res.status(500).json({ msg: "Internal server error" });
   }
 };
 const getAssignedTasks = async (req, res, next) => {
@@ -389,7 +389,7 @@ const getAssignedTasks = async (req, res, next) => {
     res.status(200).json({ tasks });
   } catch (err) {
     console.log(err);
-    res.status(400).send("internal server error");
+    res.status(400).json({ msg: "internal server error" });
   }
 };
 export default {

@@ -29,4 +29,10 @@ Router.post(
   (req, res) => {},
 );
 Router.post("/forgotpass", userControllers.forgotPass, (req, res) => {});
+Router.delete(
+  "/deleteprofile",
+  verifySession,
+  userControllers.deleteProfile,
+  (req, res) => {},
+);
 export default Router;

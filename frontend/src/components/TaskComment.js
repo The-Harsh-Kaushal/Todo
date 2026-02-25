@@ -1,7 +1,9 @@
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
+import { useErrorPopup } from "@/components/ErrorPopupProvider";
 
 export default function TaskComments({ taskId }) {
+  const { showApiError } = useErrorPopup();
   const [expanded, setExpanded] = useState(false);
   const [comments, setComments] = useState([]);
   const limit = 10;
@@ -46,7 +48,7 @@ export default function TaskComments({ taskId }) {
         setHasMore(false);
       }
     } catch (err) {
-      console.error(err);
+      showApiError(err, "Failed to load comments.");
     } finally {
       setLoading(false);
     }
@@ -72,7 +74,7 @@ export default function TaskComments({ taskId }) {
 
       setComments((prev) => [...prev, resp.data]);
     } catch (err) {
-      console.error(err);
+      showApiError(err, "Failed to post comment.");
     }
   }
 
@@ -94,7 +96,7 @@ export default function TaskComments({ taskId }) {
 
       setComments((prev) => prev.filter((c) => c._id !== commentId));
     } catch (err) {
-      console.error(err);
+      showApiError(err, "Failed to delete comment.");
     }
   }
 
@@ -165,8 +167,7 @@ export default function TaskComments({ taskId }) {
           <div
             ref={containerRef}
             onScroll={handleScroll}
-            className="mt-3 max-h-72 overflow-y-auto space-y-3 pr-2 
-                       scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent"
+            className="mt-3 max-h-72 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent"
           >
             {comments.length === 0 && !loading && (
               <p className="text-xs text-zinc-500 italic">No comments yet.</p>

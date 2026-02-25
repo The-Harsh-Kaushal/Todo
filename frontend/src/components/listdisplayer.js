@@ -37,15 +37,7 @@ export default function ListDisplayer({
       {...listeners}
       style={style}
       onClick={() => onClickHandler(id)}
-      className="w-full max-w-md 
-                 flex flex-col
-                 px-4 py-3 
-                 mb-3
-                 border border-zinc-800
-                 bg-zinc-950
-                 rounded-sm
-                 hover:border-zinc-600 hover:bg-zinc-900
-                 transition-all duration-150"
+      className="w-full max-w-md flex flex-col px-4 py-3 mb-3 border border-zinc-800 bg-zinc-950 rounded-sm hover:border-zinc-600 hover:bg-zinc-900 transition-all duration-150"
     >
       {/* Top Row */}
       <div className="flex justify-between items-center">

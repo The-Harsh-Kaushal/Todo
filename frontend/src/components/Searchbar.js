@@ -20,12 +20,7 @@ export default function Searchbar({ onSearch, value, setValue }) {
         value={value}
         onChange={(e) => handleOnChange(e)}
         placeholder="Search..."
-        className="flex-1 px-4 py-2
-                   bg-zinc-900 border border-zinc-800
-                   text-white text-sm
-                   rounded-md
-                   focus:outline-none focus:border-zinc-600
-                   transition"
+        className="flex-1 px-4 py-2 bg-zinc-900 border border-zinc-800 text-white text-sm rounded-md focus:outline-none focus:border-zinc-600 transition"
       />
     </div>
   );

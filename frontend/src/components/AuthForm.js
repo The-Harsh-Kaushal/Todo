@@ -3,13 +3,17 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
+import { getApiErrorMessage } from "@/utils/apiError";
+import { useErrorPopup } from "@/components/ErrorPopupProvider";
 
 export default function AuthForm({ mode, authHandler }) {
+  const { showApiError } = useErrorPopup();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const [message, setMessage] = useState("");
 
@@ -44,13 +48,15 @@ export default function AuthForm({ mode, authHandler }) {
       
 
       if (res.status == 200 || res.status == 204) {
-        setMessage("Password reset link sent to your email.");
+        setMessage(res.data?.msg || "Password reset link sent to your email.");
       } else {
-        setMessage(res.text || "Something went wrong.");
+        setMessage("Something went wrong.");
       }
     } catch (error) {
       console.log(error);
-      setMessage("Server error. Please try again.");
+      const msg = getApiErrorMessage(error, "Server error. Please try again.");
+      setMessage(msg);
+      showApiError(error, msg);
     }
   }
 
@@ -100,15 +106,24 @@ export default function AuthForm({ mode, authHandler }) {
               className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
             />
 
-            <motion.input
-              layout
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleChange}
-              className="border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-            />
+            <div className="relative">
+              <motion.input
+                layout
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 pr-16 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-indigo-600 hover:text-indigo-700"
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
 
             {/* Forgot Password Link (Only in Login Mode) */}
             {mode === "login" && (

@@ -43,15 +43,12 @@ export default function ListComponent({
 
   return (
     <div
-      className={`${
-        listsOpen ? "w-1/4" : "w-16"
-      } border-r border-gray-800 flex flex-col transition-all duration-300`}
+      className={`${listsOpen ? "w-1/4" : "w-16"} border-r border-gray-800 flex flex-col transition-all duration-300`}
     >
       {/* Header */}
       <div
         onClick={() => setListsOpen(!listsOpen)}
-        className={`border-b border-gray-800 bg-gray-950 cursor-pointer
-          ${listsOpen ? "px-4 py-4" : "flex-1 flex items-center justify-center"}`}
+        className={`border-b border-gray-800 bg-gray-950 cursor-pointer ${listsOpen ? "px-4 py-4" : "flex-1 flex items-center justify-center"}`}
       >
         {listsOpen ? (
           <div className="flex justify-between">

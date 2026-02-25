@@ -17,10 +17,10 @@ const AddList = async (req, res, next) => {
   try {
     const board = await boardSchema.findById(board_id);
     if (!board) {
-      return res.status(400).send("Board not found");
+      return res.status(400).json({ msg: "Board not found" });
     }
     if (id.toString() !== board.owner.toString()) {
-      return res.status(400).send("Unauthorized");
+      return res.status(400).json({ msg: "Unauthorized" });
     }
 
     const lastList = await listSchema
@@ -50,7 +50,7 @@ const AddList = async (req, res, next) => {
     res.status(200).json({ new_list });
   } catch (err) {
     console.log("Error occurred while adding list:", err);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 const UpdateList = async (req, res, next) => {
@@ -65,7 +65,7 @@ const UpdateList = async (req, res, next) => {
   try {
     const list = await listSchema.findById(list_id);
     if (!list) {
-      return res.status(400).send("List not found");
+      return res.status(400).json({ msg: "List not found" });
     }
     if (list.owner.toString() !== id)
       return res.status(400).json({ msg: "unauthorized" });
@@ -74,7 +74,7 @@ const UpdateList = async (req, res, next) => {
     res.status(200).json({ msg: "List updated" });
   } catch (err) {
     console.log("Error occurred while updating list:", err);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 const DeleteList = async (req, res, next) => {
@@ -84,7 +84,7 @@ const DeleteList = async (req, res, next) => {
   try {
     const list = await listSchema.findById(list_id);
     if (!list) {
-      return res.status(400).send("List not found");
+      return res.status(400).json({ msg: "List not found" });
     }
     if (list.owner.toString() !== id)
       return res.status(400).json({ msg: "forbidden" });
@@ -95,7 +95,7 @@ const DeleteList = async (req, res, next) => {
     res.status(200).json({ msg: "List deleted" });
   } catch (err) {
     console.log("Error occurred while deleting list:", err);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 const ChangeOrder = async (req, res, next) => {
@@ -109,17 +109,17 @@ const ChangeOrder = async (req, res, next) => {
   try {
     const list = await listSchema.findById(list_id);
     if (!list) {
-      return res.status(400).send("List not found");
+      return res.status(400).json({ msg: "List not found" });
     }
 
     const new_order = order_resolver(LB, TB);
-    if (!new_order) return res.status(500).send("internal server error");
+    if (!new_order) return res.status(500).json({ msg: "internal server error" });
     list.order = new_order;
     await list.save();
     res.status(200).json({ msg: "List order updated" });
   } catch (err) {
     console.log("Error occurred while updating list order:", err);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 
@@ -143,7 +143,7 @@ const getLists = async (req, res, next) => {
     else if (operator === "lt") operation = "$lt";
     else if (operator === "lte") operation = "$lte";
     else if (operator === "eq") operation = "$eq";
-    else return res.status(400).send("Operator is not valid");
+    else return res.status(400).json({ msg: "Operator is not valid" });
 
     matchStage = {
       $match: {
@@ -158,7 +158,7 @@ const getLists = async (req, res, next) => {
   try {
     const board = await boardSchema.findById(board_id);
     if (!board) {
-      return res.status(400).send("Board not found");
+      return res.status(400).json({ msg: "Board not found" });
     }
 
     const lists = await listSchema.aggregate([
@@ -227,7 +227,7 @@ const getLists = async (req, res, next) => {
     res.status(200).json({ lists });
   } catch (error) {
     console.log("Error occurred while getting lists:", error);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ msg: "Internal Server Error" });
   }
 };
 const getAssignedList = async (req, res, next) => {
@@ -268,7 +268,7 @@ const getAssignedList = async (req, res, next) => {
 
   } catch (err) {
     console.log(err);
-    res.status(500).send("internal server error");
+    res.status(500).json({ msg: "internal server error" });
   }
 };
 export default { AddList, UpdateList, DeleteList, ChangeOrder, getLists, getAssignedList };

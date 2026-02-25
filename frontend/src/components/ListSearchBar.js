@@ -28,11 +28,7 @@ export default function ListSearchBar({
       <select
         value={operator}
         onChange={(e) => setOperator(e.target.value)}
-        className="shrink-0 px-3 py-2
-                   bg-zinc-900 border border-zinc-800
-                   text-white text-sm
-                   rounded-md
-                   focus:outline-none focus:border-zinc-600"
+        className="shrink-0 px-3 py-2 bg-zinc-900 border border-zinc-800 text-white text-sm rounded-md focus:outline-none focus:border-zinc-600"
       >
         <option value="eq">=</option>
         <option value="lt">&lt;</option>
@@ -48,23 +44,13 @@ export default function ListSearchBar({
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="Enter value..."
-        className="flex-1 min-w-0 px-4 py-2
-                   bg-zinc-900 border border-zinc-800
-                   text-white text-sm
-                   rounded-md
-                   focus:outline-none focus:border-zinc-600
-                   transition"
+        className="flex-1 min-w-0 px-4 py-2 bg-zinc-900 border border-zinc-800 text-white text-sm rounded-md focus:outline-none focus:border-zinc-600 transition"
       />
 
       {/* Send Button */}
       <button
         onClick={handleSubmit}
-        className="shrink-0 px-4 py-2
-                   bg-zinc-800 border border-zinc-700
-                   text-sm text-white
-                   rounded-md
-                   hover:bg-zinc-700
-                   transition"
+        className="shrink-0 px-4 py-2 bg-zinc-800 border border-zinc-700 text-sm text-white rounded-md hover:bg-zinc-700 transition"
       >
         Send
       </button>

@@ -2,11 +2,13 @@
 
 import Logo from "@/components/Logo";
 import axios from "axios";
+import { useErrorPopup } from "@/components/ErrorPopupProvider";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const router = useRouter();
+  const { showApiError } = useErrorPopup();
 
   const handleLogout = async () => {
     try {
@@ -20,7 +22,7 @@ export default function Navbar() {
         },
       );
     } catch (err) {
-      console.log(err);
+      showApiError(err, "Logout failed.");
     }
     localStorage.removeItem("accesstoken");
     router.push("/");
@@ -28,9 +30,7 @@ export default function Navbar() {
 
   return (
     <nav
-      className="w-full px-5 py-4 flex items-center justify-between 
-                 bg-black/60 backdrop-blur-xl 
-                 border-b border-zinc-800"
+      className="w-full px-5 py-4 flex items-center justify-between bg-black/60 backdrop-blur-xl border-b border-zinc-800"
     >
       {/* Left: Logo */}
       <div className="flex items-center gap-3">
@@ -54,10 +54,7 @@ export default function Navbar() {
 
         <button
           onClick={handleLogout}
-          className="bg-linear-to-r from-indigo-500 to-purple-600 
-                     text-white px-4 py-2 rounded-xl 
-                     shadow-md hover:scale-105 active:scale-95 
-                     transition-all duration-200"
+          className="bg-linear-to-r from-indigo-500 to-purple-600 text-white px-4 py-2 rounded-xl shadow-md hover:scale-105 active:scale-95 transition-all duration-200"
         >
           Logout
         </button>

@@ -3,8 +3,10 @@ import CreateButton from "@/components/CreationButton";
 import Searchbar from "@/components/Searchbar";
 import Displayer from "@/components/displayer";
 import axios from "axios";
+import { useErrorPopup } from "@/components/ErrorPopupProvider";
 
 export default function BoardComponent({ boards, setBoards, onClickBoard }) {
+  const { showApiError } = useErrorPopup();
   const [boardsOpen, setBoardsOpen] = useState(true);
   const [value, setValue] = useState("");
   const scrollRef = useRef(null);
@@ -24,7 +26,7 @@ export default function BoardComponent({ boards, setBoards, onClickBoard }) {
       );
       setBoards((prev) => [response.data.new_board, ...prev]);
     } catch (error) {
-      console.log(error);
+      showApiError(error, "Failed to create board.");
     }
   }
   async function handleScroll() {
@@ -75,21 +77,18 @@ export default function BoardComponent({ boards, setBoards, onClickBoard }) {
         setBoards(boardArray);
       }
     } catch (err) {
-      console.log(err);
+      showApiError(err, "Failed to fetch boards.");
     }
   }
 
   return (
     <div
-      className={`${
-        boardsOpen ? "w-1/4" : "w-16"
-      } border-r border-gray-800 flex flex-col transition-all duration-300`}
+      className={`${boardsOpen ? "w-1/4" : "w-16"} border-r border-gray-800 flex flex-col transition-all duration-300`}
     >
       {/* Header */}
       <div
         onClick={() => setBoardsOpen(!boardsOpen)}
-        className={`border-b border-gray-800 bg-gray-950 cursor-pointer
-         ${boardsOpen ? "px-4 py-4" : "flex-1 flex items-center justify-center"}`}
+        className={`border-b border-gray-800 bg-gray-950 cursor-pointer ${boardsOpen ? "px-4 py-4" : "flex-1 flex items-center justify-center"}`}
       >
         {boardsOpen ? (
           <div className="flex justify-between">

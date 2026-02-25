@@ -4,13 +4,16 @@ import Logo from "@/components/Logo";
 import AuthToggle from "@/components/AuthToggle";
 import AuthForm from "@/components/AuthForm";
 import AuthErrorModal from "@/components/AuthError";
+import { getApiErrorMessage } from "@/utils/apiError";
+import { useErrorPopup } from "@/components/ErrorPopupProvider";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 
 export default function Home() {
   const [mode, setMode] = useState("signup");
   const [errorMessage, setErrorMessage] = useState(null);
+  const { showApiError } = useErrorPopup();
   const router = useRouter();
 
   async function Authenticate(mode, formData) {
@@ -29,8 +32,9 @@ export default function Home() {
       localStorage.setItem("accesstoken", response.data.access);
       router.push("/dashboard");
     } catch (error) {
-      const message = error.response?.data || "Server is down. Try again.";
+      const message = getApiErrorMessage(error, "Server is down. Try again.");
       setErrorMessage(message);
+      showApiError(error, message);
     }
   }
 

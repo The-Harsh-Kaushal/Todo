@@ -1,14 +1,21 @@
 "use client";
 
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { getApiErrorMessage } from "@/utils/apiError";
+import { useErrorPopup } from "@/components/ErrorPopupProvider";
 
 export default function ProfilePage() {
+  const { showApiError } = useErrorPopup();
   const [user, setUser] = useState(null);
 
   const [showResetForm, setShowResetForm] = useState(false);
   const [currentPass, setCurrentPass] = useState("");
   const [newPass, setNewPass] = useState("");
+  const [confirmPass, setConfirmPass] = useState("");
+  const [showCurrentPass, setShowCurrentPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -27,18 +34,26 @@ export default function ProfilePage() {
         );
         setUser(res.data.user);
       } catch (err) {
-        console.log(err);
+        showApiError(err, "Failed to load profile.");
       }
     };
 
     fetchProfile();
-  }, []);
+  }, [showApiError]);
 
   const handlePasswordReset = async () => {
     try {
       setLoading(true);
       setMessage("");
       setShowForgot(false);
+      if (!currentPass || !newPass || !confirmPass) {
+        setMessage("fill all the fields");
+        return;
+      }
+      if (newPass !== confirmPass) {
+        setMessage("password doesn't match ");
+        return; 
+      }
 
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/user/resetpassword`,
@@ -54,14 +69,19 @@ export default function ProfilePage() {
         setMessage("Password updated successfully.");
         setCurrentPass("");
         setNewPass("");
+        setConfirmPass("");
         setShowResetForm(false);
       }
     } catch (err) {
       if (err.response?.status === 401) {
-        setMessage("Wrong password.");
+        const msg = getApiErrorMessage(err, "Wrong password.");
+        setMessage(msg);
         setShowForgot(true);
+        showApiError(err, msg);
       } else {
-        setMessage("Something went wrong.");
+        const msg = getApiErrorMessage(err, "Something went wrong.");
+        setMessage(msg);
+        showApiError(err, msg);
       }
     } finally {
       setLoading(false);
@@ -89,7 +109,9 @@ export default function ProfilePage() {
         setMessage("Reset password email sent.");
       }
     } catch (err) {
-      setMessage("Failed to send reset email.");
+      const msg = getApiErrorMessage(err, "Failed to send reset email.");
+      setMessage(msg);
+      showApiError(err, msg);
     } finally {
       setLoading(false);
     }
@@ -146,21 +168,56 @@ export default function ProfilePage() {
           {/* Reset Form */}
           {showResetForm && (
             <div className="mt-6 space-y-4">
-              <input
-                type="password"
-                placeholder="Current Password"
-                value={currentPass}
-                onChange={(e) => setCurrentPass(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 focus:outline-none focus:border-indigo-500"
-              />
-
-              <input
-                type="password"
-                placeholder="New Password"
-                value={newPass}
-                onChange={(e) => setNewPass(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 focus:outline-none focus:border-indigo-500"
-              />
+              <div className="relative">
+                <input
+                  type={showCurrentPass ? "text" : "password"}
+                  placeholder="Current Password"
+                  value={currentPass}
+                  onChange={(e) => setCurrentPass(e.target.value)}
+                  className="w-full px-3 py-2 pr-16 rounded-lg bg-zinc-800 border border-zinc-700 focus:outline-none focus:border-indigo-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPass((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-indigo-400 hover:text-indigo-300"
+                >
+                  {showCurrentPass ? "Hide" : "Show"}
+                </button>
+              </div>
+               {/* newpass */}
+              <div className="relative">
+                <input
+                  type={showNewPass ? "text" : "password"}
+                  placeholder="New Password"
+                  value={newPass}
+                  onChange={(e) => setNewPass(e.target.value)}
+                  className="w-full px-3 py-2 pr-16 rounded-lg bg-zinc-800 border border-zinc-700 focus:outline-none focus:border-indigo-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPass((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-indigo-400 hover:text-indigo-300"
+                >
+                  {showNewPass ? "Hide" : "Show"}
+                </button>
+              </div>
+                 {/* confirm new pass */}
+              <div className="relative">
+                <input
+                  type={showConfirmPass ? "text" : "password"}
+                  placeholder="Confirm New Password"
+                  value={confirmPass}
+                  onChange={(e) => setConfirmPass(e.target.value)}
+                  className="w-full px-3 py-2 pr-16 rounded-lg bg-zinc-800 border border-zinc-700 focus:outline-none focus:border-indigo-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPass((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-indigo-400 hover:text-indigo-300"
+                >
+                  {showConfirmPass ? "Hide" : "Show"}
+                </button>
+              </div>
 
               <button
                 onClick={handlePasswordReset}

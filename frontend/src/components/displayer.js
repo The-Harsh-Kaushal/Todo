@@ -25,15 +25,7 @@ export default function Displayer({ name, owner, id, onClickHandler, listCount }
       {...listeners}
       style={style}
       onClick={() => onClickHandler(id)}
-      className="w-full max-w-md 
-                 flex items-center justify-between gap-3
-                 px-4 py-2.5 
-                 mb-3
-                 border border-zinc-800
-                 bg-zinc-950
-                 rounded-sm
-                 hover:border-zinc-600 hover:bg-zinc-900
-                 transition-all duration-150"
+      className="w-full max-w-md flex items-center justify-between gap-3 px-4 py-2.5 mb-3 border border-zinc-800 bg-zinc-950 rounded-sm hover:border-zinc-600 hover:bg-zinc-900 transition-all duration-150"
     >
       {/* Left Section */}
       <div className="flex flex-col min-w-0">

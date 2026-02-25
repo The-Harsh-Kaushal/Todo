@@ -20,15 +20,7 @@ export default function AssignedListDisplayer({
   return (
     <div
       onClick={() => onClickHandler(0)}
-      className="w-full max-w-md
-                 flex flex-col
-                 px-4 py-3
-                 mb-3
-                 border border-cyan-700/60
-                 bg-zinc-950
-                 rounded-sm
-                 hover:border-cyan-400 hover:bg-zinc-900
-                 transition-all duration-150 cursor-pointer"
+      className="w-full max-w-md flex flex-col px-4 py-3 mb-3 border border-cyan-700/60 bg-zinc-950 rounded-sm hover:border-cyan-400 hover:bg-zinc-900 transition-all duration-150 cursor-pointer"
     >
       <div className="flex justify-between items-center">
         <span className="text-[10px] uppercase tracking-widest text-cyan-400">

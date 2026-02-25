@@ -2,6 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import axios from "axios";
 import React, { useRef, useState } from "react";
+import { useErrorPopup } from "@/components/ErrorPopupProvider";
 import TaskComments from "./TaskComment";
 
 function truncate(text, length = 40) {
@@ -28,6 +29,7 @@ export default function TaskDisplayer({
   onUpdateStatus,
   onAssignCollaborator,
 }) {
+  const { showApiError } = useErrorPopup();
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [newCollaborator, setNewCollaborator] = useState("");
@@ -88,7 +90,7 @@ export default function TaskDisplayer({
         );
         setProfiles(response.data.profiles);
       } catch (err) {
-        console.error(err);
+        showApiError(err, "Failed to fetch collaborators.");
       }
     }, 300);
   }
@@ -107,13 +109,7 @@ export default function TaskDisplayer({
       ref={setNodeRef}
       style={style}
       onClick={() => !editing && setExpanded(!expanded)}
-      className="w-full 
-                 border border-zinc-800
-                 bg-zinc-950
-                 rounded-sm
-                 px-4 py-3 mb-3
-                 hover:border-zinc-600 hover:bg-zinc-900
-                 transition-all duration-200"
+      className="w-full border border-zinc-800 bg-zinc-950 rounded-sm px-4 py-3 mb-3 hover:border-zinc-600 hover:bg-zinc-900 transition-all duration-200"
     >
       {/* Top Row */}
       <div className="flex items-center justify-between gap-3">
@@ -133,10 +129,7 @@ export default function TaskDisplayer({
               value={status ? "finished" : "unfinished"}
               onClick={(e) => e.stopPropagation()}
               onChange={(e) => onUpdateStatus(id)}
-              className={`text-[11px] uppercase tracking-wider font-medium 
-    ${status ? "text-green-400" : "text-red-400"}
-    bg-gray-900 border border-gray-700 px-1 py-0.5 rounded-sm
-    outline-none cursor-pointer`}
+              className={`text-[11px] uppercase tracking-wider font-medium ${status ? "text-green-400" : "text-red-400"} bg-gray-900 border border-gray-700 px-1 py-0.5 rounded-sm outline-none cursor-pointer`}
             >
               <option value="unfinished">Unfinished</option>
               <option value="finished">Finished</option>
@@ -174,9 +167,7 @@ export default function TaskDisplayer({
       {/* Expanded */}
       {expanded && (
         <div
-          className={` transition-all duration-300 ${
-            expanded ? " mt-4" : "max-h-0"
-          }`}
+          className={`transition-all duration-300 ${expanded ? "mt-4" : "max-h-0"}`}
         >
           <div className="border-t border-zinc-800 pt-4 space-y-4">
             {!editing ? (
@@ -235,30 +226,13 @@ export default function TaskDisplayer({
                     {profiles.length > 0 && (
                       <div
                         onClick={(e) => e.stopPropagation()}
-                        className="
-                    absolute left-0 top-0 -translate-y-full mt-1
-                    w-full
-                    max-h-30
-                    overflow-y-auto
-                    bg-zinc-900
-                    border border-zinc-800
-                    rounded-sm
-                    shadow-lg
-                  "
+                        className="absolute left-0 top-0 -translate-y-full mt-1 w-full max-h-30 overflow-y-auto bg-zinc-900 border border-zinc-800 rounded-sm shadow-lg"
                       >
                         {profiles.map((item) => (
                           <div
                             onClick={(e) => onClickUserProfile(item)}
                             key={item.id}
-                            className="
-                        flex items-center justify-between
-                        px-3 py-2
-                        text-xs
-                        text-zinc-300
-                        hover:bg-zinc-800
-                        transition
-                        cursor-pointer
-                      "
+                            className="flex items-center justify-between px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 transition cursor-pointer"
                           >
                             <span className="font-medium truncate">
                               {item.name}
