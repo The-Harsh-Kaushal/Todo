@@ -26,12 +26,12 @@ export default function Navbar() {
     [notifications],
   );
 
-  const authHeaders = useMemo(
-    () => ({
+  const getAuthHeaders = useCallback(() => {
+    if (typeof window === "undefined") return {};
+    return {
       Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
-    }),
-    [],
-  );
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -39,7 +39,7 @@ export default function Navbar() {
         `${process.env.NEXT_PUBLIC_BASE_URL}/user/logout`,
         {},
         {
-          headers: authHeaders,
+          headers: getAuthHeaders(),
         },
       );
     } catch (err) {
@@ -59,7 +59,7 @@ export default function Navbar() {
         const response = await axios.get(
           `${process.env.NEXT_PUBLIC_BASE_URL}/user/notifications`,
           {
-            headers: authHeaders,
+            headers: getAuthHeaders(),
             params: {
               offset: finalOffset,
               limit: LIMIT,
@@ -88,7 +88,7 @@ export default function Navbar() {
         setLoader(false);
       }
     },
-    [authHeaders, unread, showApiError],
+    [unread, showApiError, getAuthHeaders],
   );
 
   const markNotificationAsRead = async (notificationId) => {
@@ -106,7 +106,7 @@ export default function Navbar() {
         `${process.env.NEXT_PUBLIC_BASE_URL}/user/readnotification/${notificationId}`,
         {},
         {
-          headers: authHeaders,
+          headers: getAuthHeaders(),
         },
       );
     } catch (err) {
