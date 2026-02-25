@@ -10,6 +10,7 @@ import boardSchema from "../models/boardSchema.js";
 import listSchema from "../models/listSchema.js";
 import taskSchema from "../models/taskSchema.js";
 import commentSchema from "../models/commentSchema.js";
+import notification from "../utils/notification.js";
 const verifyAsync = util.promisify(jwt.verify);
 const logout = async (req, res, next) => {
   const { id } = req.user;
@@ -181,6 +182,50 @@ const deleteProfile = async (req, res) => {
     await session.endSession();
   }
 };
+const getNotifications = async (req, res) => {
+  const { id } = req.user;
+  const { notSeen, offset, limit } = req.query;
+  const parsedOffset = Number.isNaN(Number(offset))
+    ? 0
+    : Math.max(Number(offset), 0);
+  const parsedLimit = Number.isNaN(Number(limit))
+    ? 20
+    : Math.max(Number(limit), 1);
+  const parsedNotSeen = notSeen === "true" || notSeen === true;
+
+  try {
+    const response = await notification.getNotificationsfn({
+      id,
+      notSeen: parsedNotSeen,
+      offset: parsedOffset,
+      limit: parsedLimit,
+    });
+
+    if (response.success) {
+      return res.status(200).json({ notifications: response.data });
+    }
+    return res.status(400).json({ msg: response.msg || "Failed to get notifications" });
+  } catch (err) {
+    console.log("Error occurred while getting notifications:", err);
+    return res.status(500).json({ msg: "Internal Server Error" });
+  }
+};
+const readNotificaion = async (req, res) => {
+  const { notificationId } = req.params;
+  if (!notificationId)
+    return res.status(400).json({ msg: "notificationId is required" });
+
+  try {
+    const response = await notification.readNotificaionfn({ id: notificationId });
+    if (!response.success) {
+      return res.status(404).json({ msg: response.msg || "Notification not found" });
+    }
+    return res.status(200).json({ msg: "Notification marked as read" });
+  } catch (err) {
+    console.log("Error occurred while reading notification:", err);
+    return res.status(500).json({ msg: "Internal Server Error" });
+  }
+};
 export default {
   logout,
   getProfiles,
@@ -188,4 +233,6 @@ export default {
   forgotpassreq,
   forgotPass,
   deleteProfile,
+  getNotifications,
+  readNotificaion,
 };

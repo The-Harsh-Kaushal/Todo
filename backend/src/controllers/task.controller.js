@@ -8,6 +8,7 @@ import {
   task_assignment_html,
 } from "../view/task_status_html.js";
 import mongoose from "mongoose";
+import notification from "../utils/notification.js";
 
 const createTask = async (req, res, next) => {
   const { list_id } = req.params;
@@ -114,6 +115,31 @@ const taskStatusUpdate = async (req, res, next) => {
       task.status,
     );
     sendEmail(owner.email, subject, html);
+
+    // Notify owner + collaborators except the actor.
+    const recipients = new Set([
+      task.owner.toString(),
+      ...task.collabrators.map((collabId) => collabId.toString()),
+    ]);
+    recipients.delete(id.toString());
+
+    const statusText = task.status ? "finished" : "unfinished";
+    await Promise.all(
+      [...recipients].map(async (recipientId) => {
+        const notifResponse = await notification.createNotificationfn({
+          owner: recipientId,
+          title: "Task Status Updated",
+          message: `${name} marked "${task.name}" as ${statusText}.`,
+        });
+        if (!notifResponse.success) {
+          console.log(
+            "Failed to create status update notification:",
+            notifResponse.msg,
+          );
+        }
+      }),
+    );
+
     res.status(200).json({ msg: "Task status updated" });
   } catch (err) {
     console.log("Error occurred while updating task status:", err);
@@ -148,7 +174,7 @@ const assignTask = async (req, res, next) => {
   const { task_id } = req.params;
   const { id } = req.user;
   const { email } = req.body;
-  if (!task_id) return res.staus(400).json({ msg: "select a task to assign" });
+  if (!task_id) return res.status(400).json({ msg: "select a task to assign" });
   try {
     const task = await taskSchema.findById(task_id);
     if (!task) {
@@ -173,6 +199,19 @@ const assignTask = async (req, res, next) => {
     };
     const { subject, html } = task_assignment_html(collabrator.name, task.name);
     sendEmail(collabrator.email, subject, html);
+
+    const notifResponse = await notification.createNotificationfn({
+      owner: collabrator._id,
+      title: "Task Assigned",
+      message: `You were assigned to "${task.name}" by ${req.user.name}.`,
+    });
+    if (!notifResponse.success) {
+      console.log(
+        "Failed to create task assignment notification:",
+        notifResponse.msg,
+      );
+    }
+
     res.status(200).json({ assignedTo });
   } catch (err) {
     console.log("Error occurred while assigning task:", err);

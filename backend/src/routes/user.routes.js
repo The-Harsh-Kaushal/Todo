@@ -35,4 +35,16 @@ Router.delete(
   userControllers.deleteProfile,
   (req, res) => {},
 );
+Router.get(
+  "/notifications",
+  verifySession,
+  userControllers.getNotifications,
+  (req, res) => {},
+);
+Router.patch(
+  "/readnotification/:notificationId",
+  verifySession,
+  userControllers.readNotificaion,
+  (req, res) => {},
+);
 export default Router;
