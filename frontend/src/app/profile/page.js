@@ -1,12 +1,14 @@
 "use client";
 
 import axios from "axios";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getApiErrorMessage } from "@/utils/apiError";
 import { useErrorPopup } from "@/components/ErrorPopupProvider";
+import { getApiErrorMessage } from "@/utils/apiError";
 
 export default function ProfilePage() {
   const { showApiError } = useErrorPopup();
+  const router = useRouter();
   const [user, setUser] = useState(null);
 
   const [showResetForm, setShowResetForm] = useState(false);
@@ -16,8 +18,12 @@ export default function ProfilePage() {
   const [showCurrentPass, setShowCurrentPass] = useState(false);
   const [showNewPass, setShowNewPass] = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
+  const [showDeleteForm, setShowDeleteForm] = useState(false);
+  const [deletePass, setDeletePass] = useState("");
+  const [showDeletePass, setShowDeletePass] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [deletingProfile, setDeletingProfile] = useState(false);
   const [message, setMessage] = useState("");
   const [showForgot, setShowForgot] = useState(false);
 
@@ -52,7 +58,7 @@ export default function ProfilePage() {
       }
       if (newPass !== confirmPass) {
         setMessage("password doesn't match ");
-        return; 
+        return;
       }
 
       const res = await axios.post(
@@ -117,6 +123,37 @@ export default function ProfilePage() {
     }
   };
 
+  const handleDeleteProfile = async () => {
+    if (!deletePass) {
+      setMessage("Password is required to delete profile.");
+      return;
+    }
+
+    try {
+      setDeletingProfile(true);
+      setMessage("");
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/user/deleteprofile`,
+        {
+          data: { password: deletePass },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accesstoken")}`,
+          },
+        },
+      );
+
+      localStorage.removeItem("accesstoken");
+      localStorage.removeItem("user");
+      router.push("/");
+    } catch (err) {
+      const msg = getApiErrorMessage(err, "Failed to delete profile.");
+      setMessage(msg);
+      showApiError(err, msg);
+    } finally {
+      setDeletingProfile(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-black px-4">
       {user && (
@@ -151,6 +188,7 @@ export default function ProfilePage() {
           {/* Toggle Reset Form */}
           {!showResetForm && (
             <button
+              type="button"
               onClick={() => {
                 setShowResetForm(true);
                 setMessage("");
@@ -184,7 +222,7 @@ export default function ProfilePage() {
                   {showCurrentPass ? "Hide" : "Show"}
                 </button>
               </div>
-               {/* newpass */}
+              {/* newpass */}
               <div className="relative">
                 <input
                   type={showNewPass ? "text" : "password"}
@@ -201,7 +239,7 @@ export default function ProfilePage() {
                   {showNewPass ? "Hide" : "Show"}
                 </button>
               </div>
-                 {/* confirm new pass */}
+              {/* confirm new pass */}
               <div className="relative">
                 <input
                   type={showConfirmPass ? "text" : "password"}
@@ -220,6 +258,7 @@ export default function ProfilePage() {
               </div>
 
               <button
+                type="button"
                 onClick={handlePasswordReset}
                 disabled={loading}
                 className="w-full bg-indigo-600 py-2 rounded-xl hover:bg-indigo-700 transition"
@@ -232,12 +271,74 @@ export default function ProfilePage() {
           {/* Forgot Password Button (only on 401) */}
           {showForgot && (
             <button
+              type="button"
               onClick={handleForgotPassword}
               className="mt-3 text-sm text-indigo-400 hover:underline"
             >
               Forgot Password?
             </button>
           )}
+
+          {/* Delete profile */}
+          <div className="mt-6 border-t border-red-900/70 pt-4">
+            {!showDeleteForm && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteForm(true);
+                  setMessage("");
+                }}
+                className="w-full border border-red-700 text-red-400 py-2 rounded-xl hover:bg-red-950/50 transition"
+              >
+                Delete Profile
+              </button>
+            )}
+
+            {showDeleteForm && (
+              <div className="mt-3 space-y-3">
+                <p className="text-xs text-red-300">
+                  This action is permanent. Enter your password to continue.
+                </p>
+                <div className="relative">
+                  <input
+                    type={showDeletePass ? "text" : "password"}
+                    placeholder="Confirm account password"
+                    value={deletePass}
+                    onChange={(e) => setDeletePass(e.target.value)}
+                    className="w-full px-3 py-2 pr-16 rounded-lg bg-zinc-800 border border-zinc-700 focus:outline-none focus:border-red-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowDeletePass((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-red-300 hover:text-red-200"
+                  >
+                    {showDeletePass ? "Hide" : "Show"}
+                  </button>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDeleteForm(false);
+                      setDeletePass("");
+                    }}
+                    className="flex-1 border border-zinc-700 py-2 rounded-xl text-zinc-300 hover:bg-zinc-800 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteProfile}
+                    disabled={deletingProfile}
+                    className="flex-1 bg-red-600 py-2 rounded-xl hover:bg-red-700 transition text-white disabled:opacity-70"
+                  >
+                    {deletingProfile ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Message */}
           {message && (
